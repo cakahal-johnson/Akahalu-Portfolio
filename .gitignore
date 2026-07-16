@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment variables
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Alembic cache
+backend/.pytest_cache/
+backend/.mypy_cache/
+
+# Python cache
+backend/**/__pycache__/
+
+# SQLite
+*.sqlite3
+
+# Docker
+*.pid
+
+# Coverage
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+
+# Build
+dist/
+build/
+
+# Temporary
+*.tmp

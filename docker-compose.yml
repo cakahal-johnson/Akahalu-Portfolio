@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: portfolio-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: portfolio_db
+      POSTGRES_USER: portfolio_user
+      POSTGRES_PASSWORD: portfolio_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - portfolio_postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U portfolio_user -d portfolio_db"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    networks:
+      - portfolio-network
+
+  redis:
+    image: redis:8-alpine
+    container_name: portfolio-redis
+    restart: unless-stopped
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - portfolio_redis_password
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - portfolio_redis_data:/data
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "--no-auth-warning",
+          "-a",
+          "portfolio_redis_password",
+          "ping"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+    networks:
+      - portfolio-network
+
+volumes:
+  portfolio_postgres_data:
+  portfolio_redis_data:
+
+networks:
+  portfolio-network:
+    driver: bridge
