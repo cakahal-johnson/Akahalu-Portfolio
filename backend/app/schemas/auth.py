@@ -9,9 +9,15 @@ from app.schemas.user import UserRead
 
 class LoginRequest(SchemaBase):
     email: EmailStr
+
     password: SecretStr = Field(
         min_length=1,
         max_length=128,
+    )
+
+    device_name: str | None = Field(
+        default=None,
+        max_length=150,
     )
 
 
@@ -47,5 +53,10 @@ class TokenPair(SchemaBase):
 
 
 class LoginResponse(SchemaBase):
+    user: UserRead
+    tokens: TokenPair
+
+
+class RefreshResponse(SchemaBase):
     user: UserRead
     tokens: TokenPair

@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     database_pool_timeout: int = 30
 
     redis_url: str = "redis://:portfolio_redis_password@127.0.0.1:6379/0"
+    test_database_url: str | None = None
 
     jwt_secret_key: str
     jwt_algorithm: Literal["HS256"] = "HS256"
