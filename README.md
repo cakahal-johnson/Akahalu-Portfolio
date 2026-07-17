@@ -131,7 +131,7 @@ uv run pytest
 - [x] Backend foundation
 - [x] Database models
 - [x] Alembic migrations
-- [ ] Authentication (JWT)
+- [x] Authentication (JWT)
 - [ ] RBAC
 - [ ] Portfolio API
 - [ ] CMS
