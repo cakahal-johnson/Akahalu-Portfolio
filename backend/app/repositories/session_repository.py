@@ -96,9 +96,7 @@ class SessionRepository(
             )
         )
 
-        result = await session.execute(
-            statement.returning(Session.id)
-        )
+        result = await session.execute(statement.returning(Session.id))
 
         return len(result.scalars().all())
 

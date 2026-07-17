@@ -59,18 +59,19 @@ class RefreshTokenRepository(
             .values(
                 revoked_at=effective_time,
             )
+            .returning(RefreshToken.id)
         )
 
         result = await session.execute(statement)
 
-        return result.rowcount or 0
+        return len(result.scalars().all())
 
     async def revoke_for_session(
-            self,
-            session: AsyncSession,
-            session_id: UUID,
-            *,
-            revoked_at: datetime | None = None,
+        self,
+        session: AsyncSession,
+        session_id: UUID,
+        *,
+        revoked_at: datetime | None = None,
     ) -> int:
         effective_time = revoked_at or datetime.now(UTC)
 
@@ -84,38 +85,36 @@ class RefreshTokenRepository(
             .values(
                 revoked_at=effective_time,
             )
+            .returning(RefreshToken.id)
         )
 
-        result = await session.execute(
-            statement.returning(RefreshToken.id)
-        )
+        result = await session.execute(statement)
 
         return len(result.scalars().all())
 
-    async def revoke_family(
-            self,
-            session: AsyncSession,
-            family_id: UUID,
-            *,
-            revoked_at: datetime | None = None,
+    async def revoke_all_for_user(
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+        *,
+        revoked_at: datetime | None = None,
     ) -> int:
         effective_time = revoked_at or datetime.now(UTC)
 
         statement = (
             update(RefreshToken)
             .where(
-                RefreshToken.family_id == family_id,
+                RefreshToken.user_id == user_id,
                 RefreshToken.revoked_at.is_(None),
                 RefreshToken.deleted_at.is_(None),
             )
             .values(
                 revoked_at=effective_time,
             )
+            .returning(RefreshToken.id)
         )
 
-        result = await session.execute(
-            statement.returning(RefreshToken.id)
-        )
+        result = await session.execute(statement)
 
         return len(result.scalars().all())
 

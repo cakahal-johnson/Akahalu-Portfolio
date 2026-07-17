@@ -265,12 +265,12 @@ class AuthenticationService:
                 revoked_at=now,
             )
 
-            authentication_session = stored_token.session
+            reused_token_session = stored_token.session
 
-            if authentication_session is not None:
+            if reused_token_session is not None:
                 await session_repository.revoke(
                     database_session,
-                    authentication_session,
+                    reused_token_session,
                     reason="refresh_token_reuse",
                     revoked_at=now,
                 )
@@ -285,12 +285,12 @@ class AuthenticationService:
 
             raise InvalidRefreshTokenError("The refresh token has expired.")
 
-        authentication_session = await session_repository.get_active_by_id(
+        active_session = await session_repository.get_active_by_id(
             database_session,
             stored_token.session_id,
         )
 
-        if authentication_session is None:
+        if active_session is None:
             stored_token.revoked_at = now
             await database_session.commit()
 
@@ -301,7 +301,7 @@ class AuthenticationService:
         if not user.is_active or user.deleted_at is not None:
             await session_repository.revoke(
                 database_session,
-                authentication_session,
+                active_session,
                 reason="account_disabled",
                 revoked_at=now,
             )
@@ -334,12 +334,12 @@ class AuthenticationService:
         stored_token.used_at = now
         stored_token.replaced_by_token_id = replacement_record.id
 
-        authentication_session.last_seen_at = now
-        authentication_session.expires_at = replacement_value.expires_at
+        active_session.last_seen_at = now
+        active_session.expires_at = replacement_value.expires_at
 
         access_token = create_access_token(
             user_id=user.id,
-            session_id=authentication_session.id,
+            session_id=active_session.id,
             now=now,
         )
 
