@@ -2,9 +2,12 @@ from app.db.model_registry import Base
 
 
 EXPECTED_TABLES = {
+    "login_attempts",
     "permissions",
+    "refresh_tokens",
     "role_permissions",
     "roles",
+    "sessions",
     "user_roles",
     "users",
 }

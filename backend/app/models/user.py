@@ -10,7 +10,10 @@ from app.models.associations import user_roles
 
 
 if TYPE_CHECKING:
+    from app.models.login_attempt import LoginAttempt
+    from app.models.refresh_token import RefreshToken
     from app.models.role import Role
+    from app.models.session import Session
 
 
 class User(BaseModel, ReprMixin):
@@ -96,6 +99,26 @@ class User(BaseModel, ReprMixin):
     roles: Mapped[list["Role"]] = relationship(
         secondary=user_roles,
         back_populates="users",
+        lazy="selectin",
+    )
+
+    sessions: Mapped[list["Session"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="selectin",
+    )
+
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="selectin",
+    )
+
+    login_attempts: Mapped[list["LoginAttempt"]] = relationship(
+        back_populates="user",
+        passive_deletes=True,
         lazy="selectin",
     )
 

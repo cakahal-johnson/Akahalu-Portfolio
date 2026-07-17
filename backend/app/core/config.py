@@ -24,7 +24,6 @@ class Settings(BaseSettings):
     ] = "local"
 
     debug: bool = False
-
     api_v1_prefix: str = "/api/v1"
 
     backend_host: str = "127.0.0.1"
@@ -48,6 +47,17 @@ class Settings(BaseSettings):
 
     redis_url: str = "redis://:portfolio_redis_password@127.0.0.1:6379/0"
 
+    jwt_secret_key: str
+    jwt_algorithm: Literal["HS256"] = "HS256"
+    jwt_issuer: str = "akahalu-portfolio-api"
+    jwt_audience: str = "akahalu-portfolio-web"
+
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 30
+
+    maximum_failed_login_attempts: int = 5
+    account_lockout_minutes: int = 15
+
     @property
     def is_production(self) -> bool:
         return self.environment == "production"
@@ -59,7 +69,8 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    # jwt_secret_key is supplied through the environment by BaseSettings.
+    return Settings()  # type: ignore[call-arg]
 
 
 settings = get_settings()
