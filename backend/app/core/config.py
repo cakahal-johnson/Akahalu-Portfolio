@@ -1,13 +1,18 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+ENV_FILE = BACKEND_DIR / ".env"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -40,13 +45,14 @@ class Settings(BaseSettings):
         "portfolio_password@127.0.0.1:5432/portfolio_db"
     )
 
+    test_database_url: str | None = None
+
     database_echo: bool = False
     database_pool_size: int = 10
     database_max_overflow: int = 20
     database_pool_timeout: int = 30
 
     redis_url: str = "redis://:portfolio_redis_password@127.0.0.1:6379/0"
-    test_database_url: str | None = None
 
     jwt_secret_key: str
     jwt_algorithm: Literal["HS256"] = "HS256"
@@ -70,7 +76,6 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    # jwt_secret_key is supplied through the environment by BaseSettings.
     return Settings()  # type: ignore[call-arg]
 
 

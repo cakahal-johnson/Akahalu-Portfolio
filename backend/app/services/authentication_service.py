@@ -229,12 +229,17 @@ class AuthenticationService:
 
         await database_session.commit()
 
+        # SQL expressions such as updated_at=func.now() can leave
+        # generated attributes expired after a flush or commit.
+        # Refresh the user explicitly before Pydantic reads it.
+        await database_session.refresh(user)
+
         return LoginResult(
             user=user,
             tokens=TokenPair(
                 access_token=access_token.value,
                 refresh_token=refresh_token_value.value,
-                access_token_expires_at=(access_token.expires_at),
+                access_token_expires_at=access_token.expires_at,
                 refresh_token_expires_at=(refresh_token_value.expires_at),
             ),
         )
@@ -345,12 +350,16 @@ class AuthenticationService:
 
         await database_session.commit()
 
+        # Prevent MissingGreenlet when the response schema accesses
+        # database-generated attributes such as updated_at.
+        await database_session.refresh(user)
+
         return RefreshResult(
             user=user,
             tokens=TokenPair(
                 access_token=access_token.value,
                 refresh_token=replacement_value.value,
-                access_token_expires_at=(access_token.expires_at),
+                access_token_expires_at=access_token.expires_at,
                 refresh_token_expires_at=(replacement_value.expires_at),
             ),
         )
