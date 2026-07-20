@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
 
+    email_verification_expire_hours: int = 24
+    password_reset_expire_minutes: int = 60
+
     maximum_failed_login_attempts: int = 5
     account_lockout_minutes: int = 15
 
