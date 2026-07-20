@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,6 +36,30 @@ class PermissionRepository(
             select(Permission)
             .where(
                 Permission.deleted_at.is_(None),
+            )
+            .order_by(
+                Permission.code.asc(),
+            )
+        )
+
+        result = await session.execute(statement)
+
+        return result.scalars().all()
+
+    async def list_active_by_ids(
+        self,
+        session: AsyncSession,
+        permission_ids: Sequence[UUID],
+    ) -> Sequence[Permission]:
+        if not permission_ids:
+            return []
+
+        statement = (
+            select(Permission)
+            .where(
+                Permission.id.in_(permission_ids),
+                Permission.deleted_at.is_(None),
+                Permission.is_active.is_(True),
             )
             .order_by(
                 Permission.code.asc(),

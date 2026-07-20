@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +14,26 @@ class RoleRepository(
 ):
     def __init__(self) -> None:
         super().__init__(Role)
+
+    async def get_by_id_with_permissions(
+        self,
+        session: AsyncSession,
+        role_id: UUID,
+    ) -> Role | None:
+        statement = (
+            select(Role)
+            .options(
+                selectinload(Role.permissions),
+            )
+            .where(
+                Role.id == role_id,
+                Role.deleted_at.is_(None),
+            )
+        )
+
+        result = await session.execute(statement)
+
+        return result.scalar_one_or_none()
 
     async def get_by_name(
         self,
