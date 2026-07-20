@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +26,24 @@ class PermissionRepository(
         result = await session.execute(statement)
 
         return result.scalar_one_or_none()
+
+    async def list_all(
+        self,
+        session: AsyncSession,
+    ) -> Sequence[Permission]:
+        statement = (
+            select(Permission)
+            .where(
+                Permission.deleted_at.is_(None),
+            )
+            .order_by(
+                Permission.code.asc(),
+            )
+        )
+
+        result = await session.execute(statement)
+
+        return result.scalars().all()
 
 
 permission_repository = PermissionRepository()
