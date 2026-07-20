@@ -132,7 +132,7 @@ uv run pytest
 - [x] Database models
 - [x] Alembic migrations
 - [x] Authentication (JWT)
-- [ ] RBAC
+- [x] Role-Based Access Control (RBAC) 
 - [ ] Portfolio API
 - [ ] CMS
 - [ ] Media Management

@@ -315,6 +315,47 @@ async def test_refresh_after_logout_is_rejected(
     assert refresh_response.json()["detail"]["code"] == ("refresh_token_reuse")
 
 
+async def test_login_rejects_unverified_account(
+    client: AsyncClient,
+    database_session: AsyncSession,
+) -> None:
+    email = "unverified-user@example.com"
+    password = "StrongPassword123!"
+
+    user = User(
+        email=email,
+        password_hash=hash_password(password),
+        first_name="Unverified",
+        last_name="User",
+        display_name="Unverified User",
+        is_active=True,
+        is_verified=False,
+        is_superuser=False,
+    )
+
+    database_session.add(user)
+    await database_session.flush()
+
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": email,
+            "password": password,
+            "device_name": "Windows Desktop",
+        },
+        headers={
+            "User-Agent": "pytest-authentication-client",
+        },
+    )
+
+    assert response.status_code == 403
+
+    detail = response.json()["detail"]
+
+    assert detail["code"] == "email_not_verified"
+    assert detail["message"]
+
+
 async def test_logout_all_revokes_all_user_sessions(
     client: AsyncClient,
     test_user: User,

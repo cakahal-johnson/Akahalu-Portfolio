@@ -49,6 +49,11 @@ class AccountDisabledError(AuthenticationError):
     error_code = "account_disabled"
 
 
+class EmailNotVerifiedError(AuthenticationError):
+    status_code = 403
+    error_code = "email_not_verified"
+
+
 class AccountLockedError(AuthenticationError):
     status_code = 423
     error_code = "account_locked"
@@ -174,6 +179,23 @@ class AuthenticationService:
                 raise AccountLockedError("This account is temporarily locked.")
 
             raise InvalidCredentialsError("The email address or password is incorrect.")
+
+        if not user.is_verified:
+            await login_attempt_repository.record(
+                database_session,
+                email=normalized_email,
+                user_id=user.id,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                was_successful=False,
+                failure_reason="email_not_verified",
+            )
+
+            await database_session.commit()
+
+            raise EmailNotVerifiedError(
+                "Please verify your email address before signing in."
+            )
 
         if password_result.updated_hash is not None:
             user.password_hash = password_result.updated_hash

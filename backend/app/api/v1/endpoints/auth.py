@@ -10,9 +10,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.dependencies.authentication import (
-    CurrentUser,
-)
+from app.api.dependencies.authentication import CurrentUser
 from app.db.dependencies import get_db_session
 from app.schemas.auth import (
     LoginRequest,
@@ -26,6 +24,7 @@ from app.services.authentication_service import (
     AuthenticationError,
     authentication_service,
 )
+
 
 router = APIRouter(
     prefix="/auth",
@@ -162,6 +161,4 @@ async def logout_all(
 async def get_me(
     current_user: CurrentUser,
 ) -> UserRead:
-    return UserRead.model_validate(
-        current_user,
-    )
+    return UserRead.model_validate(current_user)

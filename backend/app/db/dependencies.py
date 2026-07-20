@@ -12,5 +12,3 @@ async def get_db_session() -> AsyncIterator[AsyncSession]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()

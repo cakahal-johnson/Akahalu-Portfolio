@@ -10,7 +10,11 @@ from app.models.associations import user_roles
 
 
 if TYPE_CHECKING:
+    from app.models.email_verification_token import (
+        EmailVerificationToken,
+    )
     from app.models.login_attempt import LoginAttempt
+    from app.models.password_reset_token import PasswordResetToken
     from app.models.refresh_token import RefreshToken
     from app.models.role import Role
     from app.models.session import Session
@@ -99,6 +103,20 @@ class User(BaseModel, ReprMixin):
     roles: Mapped[list["Role"]] = relationship(
         secondary=user_roles,
         back_populates="users",
+        lazy="selectin",
+    )
+
+    email_verification_tokens: Mapped[list["EmailVerificationToken"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        lazy="selectin",
+    )
+
+    password_reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
         lazy="selectin",
     )
 
