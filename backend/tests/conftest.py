@@ -1,12 +1,12 @@
 import asyncio
 import sys
-from collections.abc import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 
-from sqlalchemy import text
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
@@ -23,12 +23,22 @@ from app.db.dependencies import get_db_session
 from app.main import app as application
 
 
-@pytest.fixture(scope="session")
-def event_loop_policy() -> asyncio.AbstractEventLoopPolicy:
+def _create_test_event_loop() -> asyncio.AbstractEventLoop:
     if sys.platform == "win32":
-        return asyncio.WindowsSelectorEventLoopPolicy()
+        return asyncio.SelectorEventLoop()
 
-    return asyncio.DefaultEventLoopPolicy()
+    return asyncio.new_event_loop()
+
+
+def pytest_asyncio_loop_factories(
+    config: pytest.Config,
+    item: pytest.Item,
+) -> dict[str, Callable[[], asyncio.AbstractEventLoop]]:
+    del config, item
+
+    return {
+        "default": _create_test_event_loop,
+    }
 
 
 @pytest.fixture(scope="session")
@@ -85,7 +95,9 @@ async def test_engine(
     try:
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.drop_all)
-            text("CREATE EXTENSION IF NOT EXISTS citext")
+
+            await connection.execute(text("CREATE EXTENSION IF NOT EXISTS citext"))
+
             await connection.run_sync(Base.metadata.create_all)
 
         yield engine
@@ -146,9 +158,7 @@ def app(
 async def client(
     app: FastAPI,
 ) -> AsyncIterator[AsyncClient]:
-    transport = ASGITransport(
-        app=app,
-    )
+    transport = ASGITransport(app=app)
 
     async with AsyncClient(
         transport=transport,
