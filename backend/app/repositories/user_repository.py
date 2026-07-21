@@ -1,8 +1,10 @@
+from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import exists, or_, select
+from sqlalchemy import Select, asc, desc, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.associations import user_roles
 from app.models.role import Role
@@ -16,19 +18,23 @@ class UserRepository(
     def __init__(self) -> None:
         super().__init__(User)
 
+    @staticmethod
+    def _with_roles(
+        statement: Select[tuple[User]],
+    ) -> Select[tuple[User]]:
+        return statement.options(
+            selectinload(User.roles).selectinload(
+                Role.permissions,
+            ),
+        )
+
     async def get_by_email(
         self,
         session: AsyncSession,
         email: str,
     ) -> User | None:
-        statement = (
-            select(User)
-            .options(
-                selectinload(User.roles).selectinload(
-                    Role.permissions,
-                ),
-            )
-            .where(
+        statement = self._with_roles(
+            select(User).where(
                 User.email == email,
                 User.deleted_at.is_(None),
             )
@@ -42,23 +48,119 @@ class UserRepository(
         self,
         session: AsyncSession,
         user_id: UUID,
+        *,
+        include_deleted: bool = False,
     ) -> User | None:
-        statement = (
-            select(User)
-            .options(
-                selectinload(User.roles).selectinload(
-                    Role.permissions,
-                ),
-            )
-            .where(
-                User.id == user_id,
-                User.deleted_at.is_(None),
-            )
+        statement = select(User).where(
+            User.id == user_id,
         )
 
-        result = await session.execute(statement)
+        if not include_deleted:
+            statement = statement.where(
+                User.deleted_at.is_(None),
+            )
+
+        result = await session.execute(
+            self._with_roles(statement),
+        )
 
         return result.scalar_one_or_none()
+
+    async def list_for_admin(
+        self,
+        session: AsyncSession,
+        *,
+        offset: int,
+        limit: int,
+        search: str | None = None,
+        is_active: bool | None = None,
+        is_verified: bool | None = None,
+        is_superuser: bool | None = None,
+        include_deleted: bool = False,
+        sort_by: str = "created_at",
+        sort_direction: str = "desc",
+    ) -> tuple[Sequence[User], int]:
+        filters: list[ColumnElement[bool]] = []
+
+        if not include_deleted:
+            filters.append(
+                User.deleted_at.is_(None),
+            )
+
+        normalized_search = search.strip() if search else None
+
+        if normalized_search:
+            search_pattern = f"%{normalized_search}%"
+
+            filters.append(
+                or_(
+                    User.email.ilike(search_pattern),
+                    User.first_name.ilike(search_pattern),
+                    User.last_name.ilike(search_pattern),
+                    User.display_name.ilike(search_pattern),
+                )
+            )
+
+        if is_active is not None:
+            filters.append(
+                User.is_active.is_(is_active),
+            )
+
+        if is_verified is not None:
+            filters.append(
+                User.is_verified.is_(is_verified),
+            )
+
+        if is_superuser is not None:
+            filters.append(
+                User.is_superuser.is_(is_superuser),
+            )
+
+        sort_columns = {
+            "created_at": User.created_at,
+            "email": User.email,
+            "first_name": User.first_name,
+            "last_name": User.last_name,
+            "display_name": User.display_name,
+        }
+
+        sort_column = sort_columns.get(
+            sort_by,
+            User.created_at,
+        )
+
+        sort_expression = (
+            asc(sort_column) if sort_direction.lower() == "asc" else desc(sort_column)
+        )
+
+        count_statement = select(
+            func.count(User.id),
+        ).where(*filters)
+
+        total_result = await session.execute(
+            count_statement,
+        )
+
+        total = int(
+            total_result.scalar_one(),
+        )
+
+        statement = (
+            select(User)
+            .where(*filters)
+            .order_by(
+                sort_expression,
+                User.id.asc(),
+            )
+            .offset(offset)
+            .limit(limit)
+        )
+
+        result = await session.execute(
+            self._with_roles(statement),
+        )
+
+        return result.scalars().unique().all(), total
 
     async def has_other_active_administrator(
         self,
