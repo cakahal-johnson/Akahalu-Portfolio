@@ -55,6 +55,34 @@ class RoleRepository(
 
         return result.scalar_one_or_none()
 
+    async def list_active_by_ids(
+        self,
+        session: AsyncSession,
+        role_ids: Sequence[UUID],
+    ) -> Sequence[Role]:
+        if not role_ids:
+            return []
+
+        statement = (
+            select(Role)
+            .options(
+                selectinload(Role.permissions),
+            )
+            .where(
+                Role.id.in_(role_ids),
+                Role.is_active.is_(True),
+                Role.deleted_at.is_(None),
+            )
+            .order_by(
+                Role.display_name.asc(),
+                Role.name.asc(),
+            )
+        )
+
+        result = await session.execute(statement)
+
+        return result.scalars().unique().all()
+
     async def list_all(
         self,
         session: AsyncSession,

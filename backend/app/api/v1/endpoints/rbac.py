@@ -18,6 +18,7 @@ from app.schemas.role import (
     RolePermissionUpdate,
     RoleRead,
     RoleUpdate,
+    UserRoleUpdate,
 )
 from app.services.rbac_service import (
     RbacError,
@@ -165,3 +166,53 @@ async def list_permissions(
     )
 
     return [PermissionRead.model_validate(permission) for permission in permissions]
+
+
+@router.get(
+    "/users/{user_id}/roles",
+    response_model=list[RoleRead],
+    status_code=status.HTTP_200_OK,
+)
+async def list_user_roles(
+    user_id: UUID,
+    _: RoleManager,
+    database_session: Annotated[
+        AsyncSession,
+        Depends(get_db_session),
+    ],
+) -> list[RoleRead]:
+    try:
+        roles = await rbac_service.list_user_roles(
+            database_session,
+            user_id=user_id,
+        )
+    except RbacError as exc:
+        raise_rbac_error(exc)
+
+    return [RoleRead.model_validate(role) for role in roles]
+
+
+@router.put(
+    "/users/{user_id}/roles",
+    response_model=list[RoleRead],
+    status_code=status.HTTP_200_OK,
+)
+async def replace_user_roles(
+    user_id: UUID,
+    payload: UserRoleUpdate,
+    _: RoleManager,
+    database_session: Annotated[
+        AsyncSession,
+        Depends(get_db_session),
+    ],
+) -> list[RoleRead]:
+    try:
+        roles = await rbac_service.replace_user_roles(
+            database_session,
+            user_id=user_id,
+            payload=payload,
+        )
+    except RbacError as exc:
+        raise_rbac_error(exc)
+
+    return [RoleRead.model_validate(role) for role in roles]

@@ -873,3 +873,898 @@ async def test_superuser_can_list_permissions(
     )
 
     assert response.status_code == 200, response.text
+
+
+async def login_user_with_tokens(
+    client: AsyncClient,
+    *,
+    email: str,
+    device_name: str = "RBAC role-assignment test",
+) -> dict[str, Any]:
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={
+            "email": email,
+            "password": TEST_PASSWORD,
+            "device_name": device_name,
+        },
+        headers={
+            "User-Agent": "rbac-role-assignment-tests",
+        },
+    )
+
+    assert response.status_code == 200, response.text
+
+    payload = cast(
+        dict[str, Any],
+        response.json(),
+    )
+
+    return cast(
+        dict[str, Any],
+        payload["tokens"],
+    )
+
+
+async def create_isolated_role_manager(
+    database_session: AsyncSession,
+    *,
+    email: str,
+) -> User:
+    roles_manage = create_permission(
+        "roles.manage",
+    )
+
+    role_manager = create_role(
+        f"role_manager_{uuid4().hex[:8]}",
+        display_name="Role Manager",
+        permissions=[
+            roles_manage,
+        ],
+    )
+
+    manager_user = create_user(
+        email=email,
+        roles=[
+            role_manager,
+        ],
+    )
+
+    database_session.add_all(
+        [
+            roles_manage,
+            role_manager,
+            manager_user,
+        ]
+    )
+
+    await database_session.flush()
+
+    return manager_user
+
+
+async def test_list_user_roles_rejects_unauthenticated_request(
+    client: AsyncClient,
+) -> None:
+    response = await client.get(
+        f"/api/v1/rbac/users/{uuid4()}/roles",
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"]["code"] == ("invalid_authentication")
+
+
+async def test_list_user_roles_rejects_user_without_permission(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=viewer_user.email,
+    )
+
+    response = await client.get(
+        f"/api/v1/rbac/users/{manager_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == ("insufficient_permissions")
+
+
+async def test_list_user_roles_returns_not_found_for_missing_user(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.get(
+        f"/api/v1/rbac/users/{uuid4()}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "user_not_found"
+
+
+async def test_list_user_roles_returns_assigned_roles(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.get(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+    )
+
+    assert response.status_code == 200, response.text
+
+    payload = cast(
+        list[dict[str, Any]],
+        response.json(),
+    )
+
+    assert [role["name"] for role in payload] == [
+        "viewer",
+    ]
+
+
+async def test_list_user_roles_excludes_deleted_roles(
+    client: AsyncClient,
+    database_session: AsyncSession,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    deleted_role = create_role(
+        "deleted_user_assignment",
+        is_deleted=True,
+    )
+
+    viewer_user.roles.append(
+        deleted_role,
+    )
+
+    database_session.add(
+        deleted_role,
+    )
+
+    await database_session.flush()
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.get(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+    )
+
+    assert response.status_code == 200
+
+    payload = cast(
+        list[dict[str, Any]],
+        response.json(),
+    )
+
+    assert [role["name"] for role in payload] == [
+        "viewer",
+    ]
+
+
+async def test_replace_user_roles_succeeds(
+    client: AsyncClient,
+    database_session: AsyncSession,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    manager_role = cast(
+        Role,
+        rbac_records["manager_role"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [
+                str(manager_role.id),
+            ],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+
+    payload = cast(
+        list[dict[str, Any]],
+        response.json(),
+    )
+
+    assert [role["name"] for role in payload] == [
+        "role_manager",
+    ]
+
+    await database_session.refresh(
+        viewer_user,
+        attribute_names=[
+            "roles",
+        ],
+    )
+
+    assert {role.id for role in viewer_user.roles} == {
+        manager_role.id,
+    }
+
+
+async def test_replace_user_roles_allows_empty_assignment(
+    client: AsyncClient,
+    database_session: AsyncSession,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json() == []
+
+    await database_session.refresh(
+        viewer_user,
+        attribute_names=[
+            "roles",
+        ],
+    )
+
+    assert viewer_user.roles == []
+
+
+async def test_replace_user_roles_rejects_duplicate_role_ids(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    viewer_role = cast(
+        Role,
+        rbac_records["viewer_role"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [
+                str(viewer_role.id),
+                str(viewer_role.id),
+            ],
+        },
+    )
+
+    assert response.status_code == 422
+
+
+async def test_replace_user_roles_rejects_unknown_role(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [
+                str(uuid4()),
+            ],
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "invalid_roles"
+
+
+async def test_replace_user_roles_rejects_inactive_role(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    inactive_role = cast(
+        Role,
+        rbac_records["inactive_role"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [
+                str(inactive_role.id),
+            ],
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "invalid_roles"
+
+
+async def test_replace_user_roles_rejects_deleted_role(
+    client: AsyncClient,
+    database_session: AsyncSession,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    deleted_role = create_role(
+        "deleted_assignment_role",
+        is_deleted=True,
+    )
+
+    database_session.add(
+        deleted_role,
+    )
+
+    await database_session.flush()
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [
+                str(deleted_role.id),
+            ],
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "invalid_roles"
+
+
+async def test_replace_user_roles_returns_not_found_for_missing_user(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{uuid4()}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [],
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "user_not_found"
+
+
+async def test_replace_user_roles_rejects_user_without_permission(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=viewer_user.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{manager_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [],
+        },
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == ("insufficient_permissions")
+
+
+async def test_superuser_can_replace_user_roles(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    superuser = cast(
+        User,
+        rbac_records["superuser"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    manager_role = cast(
+        Role,
+        rbac_records["manager_role"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=superuser.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [
+                str(manager_role.id),
+            ],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()[0]["name"] == "role_manager"
+
+
+async def test_changed_role_assignment_revokes_existing_tokens(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    manager_role = cast(
+        Role,
+        rbac_records["manager_role"],
+    )
+
+    manager_access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    viewer_tokens = await login_user_with_tokens(
+        client,
+        email=viewer_user.email,
+        device_name="Viewer role-change session",
+    )
+
+    viewer_access_token = str(
+        viewer_tokens["access_token"],
+    )
+
+    viewer_refresh_token = str(
+        viewer_tokens["refresh_token"],
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            manager_access_token,
+        ),
+        json={
+            "role_ids": [
+                str(manager_role.id),
+            ],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+
+    me_response = await client.get(
+        "/api/v1/auth/me",
+        headers=authorization_headers(
+            viewer_access_token,
+        ),
+    )
+
+    refresh_response = await client.post(
+        "/api/v1/auth/refresh",
+        json={
+            "refresh_token": viewer_refresh_token,
+        },
+    )
+
+    assert me_response.status_code == 401
+    assert refresh_response.status_code == 401
+
+
+async def test_identical_role_assignment_keeps_existing_tokens_active(
+    client: AsyncClient,
+    rbac_records: dict[str, object],
+) -> None:
+    manager_user = cast(
+        User,
+        rbac_records["manager_user"],
+    )
+
+    viewer_user = cast(
+        User,
+        rbac_records["viewer_user"],
+    )
+
+    viewer_role = cast(
+        Role,
+        rbac_records["viewer_role"],
+    )
+
+    manager_access_token = await login_user(
+        client,
+        email=manager_user.email,
+    )
+
+    viewer_tokens = await login_user_with_tokens(
+        client,
+        email=viewer_user.email,
+        device_name="Viewer unchanged-role session",
+    )
+
+    viewer_access_token = str(
+        viewer_tokens["access_token"],
+    )
+
+    viewer_refresh_token = str(
+        viewer_tokens["refresh_token"],
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{viewer_user.id}/roles",
+        headers=authorization_headers(
+            manager_access_token,
+        ),
+        json={
+            "role_ids": [
+                str(viewer_role.id),
+            ],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+
+    me_response = await client.get(
+        "/api/v1/auth/me",
+        headers=authorization_headers(
+            viewer_access_token,
+        ),
+    )
+
+    refresh_response = await client.post(
+        "/api/v1/auth/refresh",
+        json={
+            "refresh_token": viewer_refresh_token,
+        },
+    )
+
+    assert me_response.status_code == 200
+    assert refresh_response.status_code == 200
+
+
+async def test_last_active_super_admin_role_cannot_be_removed(
+    client: AsyncClient,
+    database_session: AsyncSession,
+) -> None:
+    roles_manage = create_permission(
+        "roles.manage",
+    )
+
+    super_admin_role = create_role(
+        "super_admin",
+        display_name="Super Administrator",
+        permissions=[
+            roles_manage,
+        ],
+    )
+
+    super_admin_role.is_system = True
+
+    administrator = create_user(
+        email="last-rbac-administrator@example.com",
+        roles=[
+            super_admin_role,
+        ],
+    )
+
+    database_session.add_all(
+        [
+            roles_manage,
+            super_admin_role,
+            administrator,
+        ]
+    )
+
+    await database_session.flush()
+
+    access_token = await login_user(
+        client,
+        email=administrator.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{administrator.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [],
+        },
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == ("last_administrator")
+
+
+async def test_super_admin_role_can_be_removed_when_another_admin_exists(
+    client: AsyncClient,
+    database_session: AsyncSession,
+) -> None:
+    roles_manage = create_permission(
+        "roles.manage",
+    )
+
+    super_admin_role = create_role(
+        "super_admin",
+        display_name="Super Administrator",
+        permissions=[
+            roles_manage,
+        ],
+    )
+
+    super_admin_role.is_system = True
+
+    first_administrator = create_user(
+        email="first-rbac-administrator@example.com",
+        roles=[
+            super_admin_role,
+        ],
+    )
+
+    second_administrator = create_user(
+        email="second-rbac-administrator@example.com",
+        roles=[
+            super_admin_role,
+        ],
+    )
+
+    database_session.add_all(
+        [
+            roles_manage,
+            super_admin_role,
+            first_administrator,
+            second_administrator,
+        ]
+    )
+
+    await database_session.flush()
+
+    access_token = await login_user(
+        client,
+        email=second_administrator.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{first_administrator.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json() == []
+
+
+async def test_superuser_can_remove_own_super_admin_role(
+    client: AsyncClient,
+    database_session: AsyncSession,
+) -> None:
+    super_admin_role = create_role(
+        "super_admin",
+        display_name="Super Administrator",
+    )
+
+    super_admin_role.is_system = True
+
+    superuser = create_user(
+        email="self-managing-rbac-superuser@example.com",
+        roles=[
+            super_admin_role,
+        ],
+        is_superuser=True,
+    )
+
+    database_session.add_all(
+        [
+            super_admin_role,
+            superuser,
+        ]
+    )
+
+    await database_session.flush()
+
+    access_token = await login_user(
+        client,
+        email=superuser.email,
+    )
+
+    response = await client.put(
+        f"/api/v1/rbac/users/{superuser.id}/roles",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "role_ids": [],
+        },
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json() == []

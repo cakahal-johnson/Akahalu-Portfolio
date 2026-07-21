@@ -1,5 +1,7 @@
 from collections.abc import Sequence
+from datetime import UTC, datetime
 from uuid import UUID
+from app.models.user import User
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,11 +11,19 @@ from app.models.role import Role
 from app.repositories.permission_repository import (
     permission_repository,
 )
+from app.repositories.refresh_token_repository import (
+    refresh_token_repository,
+)
 from app.repositories.role_repository import role_repository
+from app.repositories.session_repository import (
+    session_repository,
+)
+from app.repositories.user_repository import user_repository
 from app.schemas.role import (
     RoleCreate,
     RolePermissionUpdate,
     RoleUpdate,
+    UserRoleUpdate,
 )
 
 
@@ -46,6 +56,21 @@ class ProtectedSystemRoleError(RbacError):
     error_code = "protected_system_role"
 
 
+class UserNotFoundError(RbacError):
+    status_code = 404
+    error_code = "user_not_found"
+
+
+class InvalidRolesError(RbacError):
+    status_code = 422
+    error_code = "invalid_roles"
+
+
+class LastAdministratorError(RbacError):
+    status_code = 409
+    error_code = "last_administrator"
+
+
 class RbacService:
     async def list_roles(
         self,
@@ -68,6 +93,110 @@ class RbacService:
     ) -> Sequence[Permission]:
         return await permission_repository.list_all(
             session,
+        )
+
+    async def list_user_roles(
+        self,
+        session: AsyncSession,
+        *,
+        user_id: UUID,
+    ) -> Sequence[Role]:
+        user = await self._get_user(
+            session,
+            user_id,
+        )
+
+        return self._sort_roles(
+            user.roles,
+        )
+
+    async def replace_user_roles(
+        self,
+        session: AsyncSession,
+        *,
+        user_id: UUID,
+        payload: UserRoleUpdate,
+    ) -> Sequence[Role]:
+        user = await self._get_user(
+            session,
+            user_id,
+        )
+
+        roles = await self._resolve_roles(
+            session,
+            payload.role_ids,
+        )
+
+        current_role_ids = {role.id for role in user.roles if role.deleted_at is None}
+
+        requested_role_ids = {role.id for role in roles}
+
+        if current_role_ids == requested_role_ids:
+            return self._sort_roles(
+                user.roles,
+            )
+
+        current_role_names = {
+            role.name.strip().lower()
+            for role in user.roles
+            if (role.is_active and role.deleted_at is None and role.name.strip())
+        }
+
+        requested_role_names = {
+            role.name.strip().lower() for role in roles if role.name.strip()
+        }
+
+        removes_super_admin = (
+            "super_admin" in current_role_names
+            and "super_admin" not in requested_role_names
+        )
+
+        if removes_super_admin and not user.is_superuser:
+            has_other_administrator = (
+                await user_repository.has_other_active_administrator(
+                    session,
+                    excluded_user_id=user.id,
+                )
+            )
+
+            if not has_other_administrator:
+                raise LastAdministratorError(
+                    "The last active administrator cannot lose administrative access."
+                )
+
+        user.roles = list(roles)
+
+        now = datetime.now(UTC)
+
+        try:
+            await refresh_token_repository.revoke_all_for_user(
+                session,
+                user.id,
+                revoked_at=now,
+            )
+
+            await session_repository.revoke_all_for_user(
+                session,
+                user.id,
+                reason="roles_changed",
+                revoked_at=now,
+            )
+
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
+        updated_user = await user_repository.get_by_id_with_roles(
+            session,
+            user.id,
+        )
+
+        if updated_user is None:
+            raise UserNotFoundError("The updated user could not be retrieved.")
+
+        return self._sort_roles(
+            updated_user.roles,
         )
 
     async def create_role(
@@ -221,6 +350,21 @@ class RbacService:
 
         return updated_role
 
+    async def _get_user(
+        self,
+        session: AsyncSession,
+        user_id: UUID,
+    ) -> User:
+        user = await user_repository.get_by_id_with_roles(
+            session,
+            user_id,
+        )
+
+        if user is None:
+            raise UserNotFoundError("The requested user was not found.")
+
+        return user
+
     async def _get_role(
         self,
         session: AsyncSession,
@@ -235,6 +379,27 @@ class RbacService:
             raise RoleNotFoundError("The requested role was not found.")
 
         return role
+
+    async def _resolve_roles(
+        self,
+        session: AsyncSession,
+        role_ids: Sequence[UUID],
+    ) -> Sequence[Role]:
+        if not role_ids:
+            return []
+
+        roles = await role_repository.list_active_by_ids(
+            session,
+            role_ids,
+        )
+
+        requested_ids = set(role_ids)
+        resolved_ids = {role.id for role in roles}
+
+        if requested_ids != resolved_ids:
+            raise InvalidRolesError("One or more roles do not exist or are inactive.")
+
+        return roles
 
     async def _resolve_permissions(
         self,
@@ -258,6 +423,25 @@ class RbacService:
             )
 
         return permissions
+
+    @staticmethod
+    def _sort_roles(
+        roles: Sequence[Role],
+    ) -> list[Role]:
+        visible_roles = [role for role in roles if role.deleted_at is None]
+
+        for role in visible_roles:
+            role.permissions.sort(
+                key=lambda permission: permission.code,
+            )
+
+        return sorted(
+            visible_roles,
+            key=lambda role: (
+                role.display_name,
+                role.name,
+            ),
+        )
 
 
 rbac_service = RbacService()

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import Field, field_validator
+from pydantic import ConfigDict, Field, field_validator
 
 from app.schemas.base import DatabaseSchema, SchemaBase
 from app.schemas.permission import PermissionRead
@@ -30,6 +30,10 @@ class RoleBase(SchemaBase):
 
 
 class RoleCreate(SchemaBase):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
     name: str = Field(
         min_length=2,
         max_length=100,
@@ -79,6 +83,27 @@ class RoleUpdate(SchemaBase):
     )
 
     is_active: bool | None = None
+
+
+class UserRoleUpdate(SchemaBase):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    role_ids: list[UUID] = Field(
+        default_factory=list,
+    )
+
+    @field_validator("role_ids")
+    @classmethod
+    def validate_role_ids(
+        cls,
+        role_ids: list[UUID],
+    ) -> list[UUID]:
+        if len(role_ids) != len(set(role_ids)):
+            raise ValueError("Role IDs must be unique.")
+
+        return role_ids
 
 
 class RolePermissionUpdate(SchemaBase):
