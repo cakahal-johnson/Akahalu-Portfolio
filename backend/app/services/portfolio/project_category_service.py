@@ -66,7 +66,9 @@ class ProjectCategoryService:
     ) -> ProjectCategory:
         """Return a category by slug or raise a not-found error."""
 
-        normalized_slug = slug.strip().lower()
+        normalized_slug = self._normalize_slug(
+            slug,
+        )
 
         category = await self.repository.get_by_slug(
             session,
@@ -87,7 +89,9 @@ class ProjectCategoryService:
     ) -> Sequence[ProjectCategory]:
         """Return active categories available to public clients."""
 
-        return await self.repository.list_public(session)
+        return await self.repository.list_public(
+            session,
+        )
 
     async def list_for_admin(
         self,
@@ -128,8 +132,12 @@ class ProjectCategoryService:
 
         data = payload.model_dump()
 
-        name = self._normalize_name(data["name"])
-        slug = self._normalize_slug(data["slug"])
+        name = self._normalize_name(
+            data.pop("name"),
+        )
+        slug = self._normalize_slug(
+            data.pop("slug"),
+        )
 
         await self._ensure_name_available(
             session,
@@ -147,11 +155,10 @@ class ProjectCategoryService:
             slug=slug,
         )
 
-        session.add(category)
-        await session.flush()
-        await session.refresh(category)
-
-        return category
+        return await self.repository.add(
+            session,
+            category,
+        )
 
     async def update(
         self,
@@ -204,7 +211,9 @@ class ProjectCategoryService:
             )
 
         await session.flush()
-        await session.refresh(category)
+        await session.refresh(
+            category,
+        )
 
         return category
 
@@ -241,7 +250,9 @@ class ProjectCategoryService:
         category.soft_delete()
 
         await session.flush()
-        await session.refresh(category)
+        await session.refresh(
+            category,
+        )
 
         return category
 
@@ -276,7 +287,9 @@ class ProjectCategoryService:
         category.restore()
 
         await session.flush()
-        await session.refresh(category)
+        await session.refresh(
+            category,
+        )
 
         return category
 
@@ -297,7 +310,9 @@ class ProjectCategoryService:
         category.is_active = is_active
 
         await session.flush()
-        await session.refresh(category)
+        await session.refresh(
+            category,
+        )
 
         return category
 
@@ -342,13 +357,19 @@ class ProjectCategoryService:
             )
 
     @staticmethod
-    def _normalize_name(value: str) -> str:
+    def _normalize_name(
+        value: str,
+    ) -> str:
         """Normalize whitespace in a category name."""
 
-        return " ".join(value.split())
+        return " ".join(
+            value.split(),
+        )
 
     @staticmethod
-    def _normalize_slug(value: str) -> str:
+    def _normalize_slug(
+        value: str,
+    ) -> str:
         """Normalize a category slug."""
 
         return value.strip().lower()
