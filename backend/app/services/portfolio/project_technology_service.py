@@ -66,7 +66,9 @@ class ProjectTechnologyService:
     ) -> ProjectTechnology:
         """Return a technology by slug or raise a not-found error."""
 
-        normalized_slug = self._normalize_slug(slug)
+        normalized_slug = self._normalize_slug(
+            slug,
+        )
 
         technology = await self.repository.get_by_slug(
             session,
@@ -146,10 +148,10 @@ class ProjectTechnologyService:
         )
 
         name = self._normalize_name(
-            data["name"],
+            data.pop("name"),
         )
         slug = self._normalize_slug(
-            data["slug"],
+            data.pop("slug"),
         )
 
         await self._ensure_name_available(
@@ -168,9 +170,14 @@ class ProjectTechnologyService:
             slug=slug,
         )
 
-        session.add(technology)
+        session.add(
+            technology,
+        )
+
         await session.flush()
-        await session.refresh(technology)
+        await session.refresh(
+            technology,
+        )
 
         return technology
 
@@ -226,7 +233,9 @@ class ProjectTechnologyService:
             )
 
         await session.flush()
-        await session.refresh(technology)
+        await session.refresh(
+            technology,
+        )
 
         return technology
 
@@ -263,7 +272,9 @@ class ProjectTechnologyService:
         technology.soft_delete()
 
         await session.flush()
-        await session.refresh(technology)
+        await session.refresh(
+            technology,
+        )
 
         return technology
 
@@ -298,7 +309,9 @@ class ProjectTechnologyService:
         technology.restore()
 
         await session.flush()
-        await session.refresh(technology)
+        await session.refresh(
+            technology,
+        )
 
         return technology
 
@@ -319,7 +332,9 @@ class ProjectTechnologyService:
         technology.is_active = is_active
 
         await session.flush()
-        await session.refresh(technology)
+        await session.refresh(
+            technology,
+        )
 
         return technology
 
@@ -401,13 +416,19 @@ class ProjectTechnologyService:
             )
 
     @staticmethod
-    def _normalize_name(value: str) -> str:
+    def _normalize_name(
+        value: str,
+    ) -> str:
         """Normalize whitespace in a technology name."""
 
-        return " ".join(value.split())
+        return " ".join(
+            value.split(),
+        )
 
     @staticmethod
-    def _normalize_slug(value: str) -> str:
+    def _normalize_slug(
+        value: str,
+    ) -> str:
         """Normalize a technology slug."""
 
         return value.strip().lower()
