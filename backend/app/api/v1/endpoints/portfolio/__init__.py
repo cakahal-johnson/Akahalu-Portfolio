@@ -3,6 +3,9 @@
 from app.api.v1.endpoints.portfolio.admin_categories import (
     router as admin_portfolio_categories_router,
 )
+from app.api.v1.endpoints.portfolio.admin_technologies import (
+    router as admin_portfolio_technologies_router,
+)
 from app.api.v1.endpoints.portfolio.public import (
     router as public_portfolio_router,
 )
@@ -10,5 +13,6 @@ from app.api.v1.endpoints.portfolio.public import (
 
 __all__ = [
     "admin_portfolio_categories_router",
+    "admin_portfolio_technologies_router",
     "public_portfolio_router",
 ]

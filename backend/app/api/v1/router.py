@@ -10,6 +10,7 @@ from app.api.v1.endpoints.admin_users import (
 
 from app.api.v1.endpoints.portfolio import (
     admin_portfolio_categories_router,
+    admin_portfolio_technologies_router,
     public_portfolio_router,
 )
 
@@ -30,4 +31,7 @@ api_router.include_router(
 )
 api_router.include_router(
     admin_portfolio_categories_router,
+)
+api_router.include_router(
+    admin_portfolio_technologies_router,
 )
