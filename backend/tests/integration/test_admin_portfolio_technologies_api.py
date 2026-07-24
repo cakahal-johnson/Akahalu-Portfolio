@@ -9,6 +9,8 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.permission import Permission
+from app.models.project import Project
+from app.models.project_associations import ProjectTechnologyAssociation
 from app.models.project_technology import ProjectTechnology
 from app.models.role import Role
 from app.models.user import User
@@ -278,6 +280,42 @@ async def admin_technology_records(
         deleted_at=datetime.now(UTC),
     )
 
+    assigned_technology = create_technology(
+        name="SQLAlchemy",
+        slug="sqlalchemy",
+        category="library",
+        icon="sqlalchemy",
+        official_url="https://www.sqlalchemy.org",
+        color="#D71F00",
+        sort_order=5,
+    )
+
+    assigned_project = Project(
+        title="Portfolio Backend API",
+        slug="portfolio-backend-api",
+        short_description=(
+            "A secure FastAPI backend for managing professional portfolio content."
+        ),
+        description=(
+            "A production-ready portfolio backend built with FastAPI, "
+            "SQLAlchemy, PostgreSQL, role-based authorization, and tested "
+            "administrative content-management workflows."
+        ),
+        status="draft",
+        visibility="private",
+        is_featured=False,
+        sort_order=1,
+        created_by=manager_user,
+        updated_by=manager_user,
+    )
+
+    assigned_technology_association = ProjectTechnologyAssociation(
+        project=assigned_project,
+        technology=assigned_technology,
+        is_featured=True,
+        sort_order=1,
+    )
+
     database_session.add_all(
         [
             projects_read,
@@ -302,6 +340,9 @@ async def admin_technology_records(
             fastapi_technology,
             postgresql_technology,
             deleted_technology,
+            assigned_technology,
+            assigned_project,
+            assigned_technology_association,
         ]
     )
 
@@ -319,6 +360,9 @@ async def admin_technology_records(
         "fastapi_technology": fastapi_technology,
         "postgresql_technology": postgresql_technology,
         "deleted_technology": deleted_technology,
+        "assigned_technology": assigned_technology,
+        "assigned_project": assigned_project,
+        "assigned_technology_association": (assigned_technology_association),
     }
 
 
@@ -394,7 +438,7 @@ async def test_list_technologies_returns_paginated_results(
 
     assert payload["page"] == 1
     assert payload["page_size"] == 2
-    assert payload["total_items"] == 3
+    assert payload["total_items"] == 4
     assert payload["total_pages"] == 2
     assert payload["has_next_page"] is True
     assert payload["has_previous_page"] is False
@@ -566,7 +610,7 @@ async def test_list_technologies_can_include_deleted_records(
         response.json(),
     )
 
-    assert payload["total_items"] == 4
+    assert payload["total_items"] == 5
 
     items = cast(
         list[dict[str, Any]],
@@ -1157,6 +1201,42 @@ async def test_delete_technology_succeeds(
 
     assert payload["id"] == str(postgresql_technology.id)
     assert payload["deleted_at"] is not None
+
+
+async def test_delete_technology_rejects_technology_assigned_to_project(
+    client: AsyncClient,
+    admin_technology_records: dict[str, object],
+) -> None:
+    deleter_user = cast(
+        User,
+        admin_technology_records["deleter_user"],
+    )
+    assigned_technology = cast(
+        ProjectTechnology,
+        admin_technology_records["assigned_technology"],
+    )
+
+    access_token = await login_user(
+        client,
+        email=deleter_user.email,
+    )
+
+    response = await client.request(
+        "DELETE",
+        f"{ADMIN_TECHNOLOGY_URL}/{assigned_technology.id}",
+        headers=authorization_headers(
+            access_token,
+        ),
+        json={
+            "reason": (
+                "Deletion must be rejected because this technology "
+                "is assigned to a portfolio project."
+            ),
+        },
+    )
+
+    assert response.status_code == 409, response.text
+    assert response.json()["detail"]["code"] == ("project_technology_in_use")
 
 
 async def test_delete_technology_rejects_user_without_delete_permission(
