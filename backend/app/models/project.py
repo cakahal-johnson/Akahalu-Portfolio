@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from app.models.project_category import ProjectCategory
     from app.models.project_link import ProjectLink
     from app.models.project_media import ProjectMedia
+    from app.models.project_technology import ProjectTechnology
     from app.models.user import User
 
 
@@ -365,3 +366,42 @@ class Project(BaseModel, ReprMixin):
             ),
             None,
         )
+
+    @property
+    def technology_assignments(
+        self,
+    ) -> list[ProjectTechnologyAssociation]:
+        """
+        Return active technology assignments for administrative schemas.
+
+        The administrative API exposes these records as
+        ``technology_assignments`` while the SQLAlchemy relationship is
+        named ``technology_associations``.
+        """
+
+        return [
+            association
+            for association in self.technology_associations
+            if association.deleted_at is None
+        ]
+
+    @property
+    def technologies(
+        self,
+    ) -> list[ProjectTechnology]:
+        """
+        Return active and available technologies for public schemas.
+
+        Public project responses expose technology summaries directly rather
+        than the association metadata used by administrative responses.
+        """
+
+        return [
+            association.technology
+            for association in self.technology_associations
+            if (
+                association.deleted_at is None
+                and association.technology.is_active
+                and association.technology.deleted_at is None
+            )
+        ]

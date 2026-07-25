@@ -306,6 +306,7 @@ class ProjectService:
 
         project = Project(
             **data,
+            technology_associations=[],
         )
 
         session.add(
@@ -711,6 +712,14 @@ class ProjectService:
             )
 
         project.restore()
+
+        for association in project.technology_associations:
+            if (
+                association.deleted_at is not None
+                and association.technology.is_active
+                and association.technology.deleted_at is None
+            ):
+                association.restore()
 
         if restore_as_draft:
             project.status = "draft"
