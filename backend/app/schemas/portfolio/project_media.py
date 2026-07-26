@@ -22,13 +22,13 @@ class ProjectMediaBase(SchemaBase):
     alt_text: str | None = Field(
         default=None,
         max_length=255,
-        examples=["Screenshot of the portfolio project dashboard."],
+        examples=["Screenshot of the Akahalu Portfolio dashboard"],
     )
 
     caption: str | None = Field(
         default=None,
-        max_length=5000,
-        examples=["Administrative dashboard showing portfolio analytics."],
+        max_length=5_000,
+        examples=["Administrative dashboard showing portfolio project statistics."],
     )
 
     provider: str | None = Field(
@@ -52,25 +52,25 @@ class ProjectMediaBase(SchemaBase):
     width: int | None = Field(
         default=None,
         gt=0,
-        examples=[1920],
+        le=100_000,
     )
 
     height: int | None = Field(
         default=None,
         gt=0,
-        examples=[1080],
+        le=100_000,
     )
 
     file_size_bytes: int | None = Field(
         default=None,
         gt=0,
-        examples=[245760],
+        le=10_737_418_240,
     )
 
     duration_seconds: int | None = Field(
         default=None,
         gt=0,
-        examples=[90],
+        le=604_800,
     )
 
     is_primary: bool = False
@@ -90,18 +90,19 @@ class ProjectMediaBase(SchemaBase):
         if value is None or not isinstance(value, str):
             return value
 
-        return value.strip()
+        normalized_value = value.strip()
+
+        return normalized_value or None
 
     @field_validator(
         "alt_text",
-        "caption",
         "provider",
         "provider_asset_id",
         "mime_type",
         mode="before",
     )
     @classmethod
-    def normalize_optional_text(
+    def normalize_optional_single_line_text(
         cls,
         value: object,
     ) -> object:
@@ -112,14 +113,60 @@ class ProjectMediaBase(SchemaBase):
 
         return normalized_value or None
 
-    @model_validator(mode="after")
-    def validate_provider_metadata(self) -> Self:
-        has_provider = self.provider is not None
-        has_provider_asset_id = self.provider_asset_id is not None
+    @field_validator(
+        "caption",
+        mode="before",
+    )
+    @classmethod
+    def normalize_caption(
+        cls,
+        value: object,
+    ) -> object:
+        if value is None or not isinstance(value, str):
+            return value
 
-        if has_provider != has_provider_asset_id:
+        normalized_value = value.strip()
+
+        return normalized_value or None
+
+    @field_validator(
+        "mime_type",
+        mode="after",
+    )
+    @classmethod
+    def normalize_mime_type(
+        cls,
+        value: str | None,
+    ) -> str | None:
+        if value is None:
+            return None
+
+        return value.lower()
+
+    @model_validator(mode="after")
+    def validate_media_metadata(self) -> Self:
+        if (self.width is None) != (self.height is None):
+            raise ValueError("Media width and height must be provided together.")
+
+        if (
+            self.media_type is ProjectMediaType.IMAGE
+            and self.duration_seconds is not None
+        ):
+            raise ValueError("Image media cannot include a duration.")
+
+        if (
+            self.media_type
+            not in {
+                ProjectMediaType.VIDEO,
+                ProjectMediaType.DEMO,
+            }
+            and self.duration_seconds is not None
+        ):
+            raise ValueError("Duration is only supported for video or demo media.")
+
+        if self.thumbnail_url is not None and self.thumbnail_url == self.url:
             raise ValueError(
-                "Provider and provider asset ID must be supplied together."
+                "The thumbnail URL must differ from the primary media URL."
             )
 
         return self
@@ -149,7 +196,7 @@ class ProjectMediaUpdate(SchemaBase):
 
     caption: str | None = Field(
         default=None,
-        max_length=5000,
+        max_length=5_000,
     )
 
     provider: str | None = Field(
@@ -170,21 +217,25 @@ class ProjectMediaUpdate(SchemaBase):
     width: int | None = Field(
         default=None,
         gt=0,
+        le=100_000,
     )
 
     height: int | None = Field(
         default=None,
         gt=0,
+        le=100_000,
     )
 
     file_size_bytes: int | None = Field(
         default=None,
         gt=0,
+        le=10_737_418_240,
     )
 
     duration_seconds: int | None = Field(
         default=None,
         gt=0,
+        le=604_800,
     )
 
     is_primary: bool | None = None
@@ -204,18 +255,19 @@ class ProjectMediaUpdate(SchemaBase):
         if value is None or not isinstance(value, str):
             return value
 
-        return value.strip()
+        normalized_value = value.strip()
+
+        return normalized_value or None
 
     @field_validator(
         "alt_text",
-        "caption",
         "provider",
         "provider_asset_id",
         "mime_type",
         mode="before",
     )
     @classmethod
-    def normalize_optional_text(
+    def normalize_optional_single_line_text(
         cls,
         value: object,
     ) -> object:
@@ -226,55 +278,147 @@ class ProjectMediaUpdate(SchemaBase):
 
         return normalized_value or None
 
+    @field_validator(
+        "caption",
+        mode="before",
+    )
+    @classmethod
+    def normalize_caption(
+        cls,
+        value: object,
+    ) -> object:
+        if value is None or not isinstance(value, str):
+            return value
+
+        normalized_value = value.strip()
+
+        return normalized_value or None
+
+    @field_validator(
+        "mime_type",
+        mode="after",
+    )
+    @classmethod
+    def normalize_mime_type(
+        cls,
+        value: str | None,
+    ) -> str | None:
+        if value is None:
+            return None
+
+        return value.lower()
+
     @model_validator(mode="after")
     def validate_update(self) -> Self:
         if not self.model_fields_set:
-            raise ValueError("At least one project-media field must be provided.")
+            raise ValueError("At least one project media field must be provided.")
 
-        provider_was_set = "provider" in self.model_fields_set
-        asset_id_was_set = "provider_asset_id" in self.model_fields_set
+        width_was_provided = "width" in self.model_fields_set
+        height_was_provided = "height" in self.model_fields_set
 
-        if provider_was_set != asset_id_was_set:
-            raise ValueError("Provider and provider asset ID must be updated together.")
+        if width_was_provided != height_was_provided:
+            raise ValueError("Media width and height must be updated together.")
 
-        has_provider = self.provider is not None
-        has_provider_asset_id = self.provider_asset_id is not None
+        if (
+            self.media_type is ProjectMediaType.IMAGE
+            and self.duration_seconds is not None
+        ):
+            raise ValueError("Image media cannot include a duration.")
 
-        if provider_was_set and has_provider != has_provider_asset_id:
+        if (
+            self.media_type is not None
+            and self.media_type
+            not in {
+                ProjectMediaType.VIDEO,
+                ProjectMediaType.DEMO,
+            }
+            and self.duration_seconds is not None
+        ):
+            raise ValueError("Duration is only supported for video or demo media.")
+
+        if (
+            self.url is not None
+            and self.thumbnail_url is not None
+            and self.url == self.thumbnail_url
+        ):
             raise ValueError(
-                "Provider and provider asset ID must both contain values "
-                "or both be null."
+                "The thumbnail URL must differ from the primary media URL."
             )
 
         return self
 
 
-class ProjectMediaRead(SchemaBase):
+class ProjectMediaRead(
+    ProjectMediaBase,
+    DatabaseSchema,
+):
+    project_id: UUID
+
+
+class ProjectMediaAdminRead(ProjectMediaRead):
+    """
+    Administrative representation of a project media record.
+
+    This currently exposes the same persisted fields as ProjectMediaRead,
+    including database timestamps and soft-deletion metadata. It remains a
+    separate schema so administrative responses can evolve independently.
+    """
+
+
+class ProjectMediaSummary(SchemaBase):
     id: UUID
+
     project_id: UUID
 
     media_type: ProjectMediaType
 
     url: str
+
     thumbnail_url: str | None = None
 
     alt_text: str | None = None
+
     caption: str | None = None
 
     width: int | None = None
+
     height: int | None = None
 
     duration_seconds: int | None = None
 
     is_primary: bool
+
     sort_order: int
 
 
-class ProjectMediaAdminRead(
-    ProjectMediaBase,
-    DatabaseSchema,
-):
-    project_id: UUID
+class ProjectMediaPrimaryUpdate(SchemaBase):
+    model_config = ConfigDict(
+        extra="forbid",
+    )
+
+    is_primary: bool = True
+
+    reason: str | None = Field(
+        default=None,
+        min_length=3,
+        max_length=500,
+    )
+
+    @field_validator(
+        "reason",
+        mode="before",
+    )
+    @classmethod
+    def normalize_reason(
+        cls,
+        value: object,
+    ) -> object:
+        if value is None or not isinstance(value, str):
+            return value
+
+        normalized_value = " ".join(value.split())
+
+        return normalized_value or None
 
 
 class ProjectMediaDeleteRequest(SchemaBase):
@@ -310,6 +454,8 @@ class ProjectMediaRestoreRequest(SchemaBase):
         extra="forbid",
     )
 
+    restore_as_primary: bool = False
+
     reason: str | None = Field(
         default=None,
         min_length=3,
@@ -331,14 +477,6 @@ class ProjectMediaRestoreRequest(SchemaBase):
         normalized_value = " ".join(value.split())
 
         return normalized_value or None
-
-
-class ProjectMediaPrimaryUpdate(SchemaBase):
-    model_config = ConfigDict(
-        extra="forbid",
-    )
-
-    is_primary: bool = True
 
 
 ProjectMediaListResponse = PaginatedResponse[ProjectMediaRead]

@@ -8,12 +8,15 @@ from app.api.v1.endpoints.admin_users import (
 )
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.health import router as health_router
+
 from app.api.v1.endpoints.portfolio import (
     admin_portfolio_categories_router,
+    admin_portfolio_project_media_router,
     admin_portfolio_projects_router,
     admin_portfolio_technologies_router,
     public_portfolio_router,
 )
+
 from app.api.v1.endpoints.rbac import router as rbac_router
 
 
@@ -45,4 +48,8 @@ api_router.include_router(
 )
 api_router.include_router(
     admin_portfolio_projects_router,
+)
+
+api_router.include_router(
+    admin_portfolio_project_media_router,
 )

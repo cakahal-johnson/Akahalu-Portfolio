@@ -323,7 +323,7 @@ class ProjectMediaService:
         session: AsyncSession,
         media_id: UUID,
         *,
-        restore_as_primary: bool | None = None,
+        restore_as_primary: bool = False,
     ) -> ProjectMedia:
         """Restore soft-deleted media after uniqueness checks."""
 
@@ -355,9 +355,7 @@ class ProjectMediaService:
             exclude_media_id=media.id,
         )
 
-        should_be_primary = (
-            restore_as_primary if restore_as_primary is not None else media.is_primary
-        )
+        should_be_primary = restore_as_primary
 
         if should_be_primary:
             await self._clear_existing_primary(
