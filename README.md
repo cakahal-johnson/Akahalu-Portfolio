@@ -133,10 +133,10 @@ uv run pytest
 - [x] Alembic migrations
 - [x] Authentication (JWT)
 - [x] Role-Based Access Control (RBAC) 
-- [ ] Portfolio API
-- [ ] CMS
-- [ ] Media Management
-- [ ] Blog Module
+- [x] Portfolio API
+- [x] CMS
+- [x] Media Management
+- [x] Blog Module
 - [ ] Contact API
 - [ ] Next.js Frontend
 - [ ] Admin Dashboard
