@@ -2,7 +2,14 @@ from enum import StrEnum
 from typing import Annotated, Generic, TypeVar
 from uuid import UUID
 
-from pydantic import ConfigDict, Field, field_validator
+from pydantic import (
+    AnyHttpUrl,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    TypeAdapter,
+    field_validator,
+)
 
 from app.schemas.base import SchemaBase
 
@@ -110,8 +117,50 @@ SortOrder = Annotated[
     ),
 ]
 
+
+_resource_url_adapter = TypeAdapter(
+    AnyHttpUrl,
+)
+
+
+def validate_resource_url(
+    value: object,
+) -> str:
+    """
+    Validate an HTTP or HTTPS URL while preserving its string format.
+
+    Pydantic's AnyHttpUrl normalizes bare domains by appending a trailing
+    slash. Portfolio resources preserve the submitted URL representation
+    after surrounding whitespace is removed.
+    """
+
+    if not isinstance(
+        value,
+        str,
+    ):
+        raise ValueError(
+            "Resource URL must be a string.",
+        )
+
+    normalized_value = value.strip()
+
+    if not normalized_value:
+        raise ValueError(
+            "Resource URL cannot be empty.",
+        )
+
+    _resource_url_adapter.validate_python(
+        normalized_value,
+    )
+
+    return normalized_value
+
+
 ResourceUrl = Annotated[
     str,
+    BeforeValidator(
+        validate_resource_url,
+    ),
     Field(
         min_length=1,
         max_length=2048,
@@ -163,23 +212,29 @@ class PortfolioSearchQuery(PaginationQuery):
 
 class PublicProjectListQuery(PortfolioSearchQuery):
     category_slug: Slug | None = None
+
     technology_slugs: list[Slug] = Field(
         default_factory=list,
         max_length=20,
     )
+
     featured: bool | None = None
 
     sort_by: ProjectSortField = ProjectSortField.SORT_ORDER
     sort_direction: SortDirection = SortDirection.ASC
 
-    @field_validator("technology_slugs")
+    @field_validator(
+        "technology_slugs",
+    )
     @classmethod
     def validate_technology_slugs(
         cls,
         technology_slugs: list[str],
     ) -> list[str]:
         if len(technology_slugs) != len(set(technology_slugs)):
-            raise ValueError("Technology slugs must be unique.")
+            raise ValueError(
+                "Technology slugs must be unique.",
+            )
 
         return technology_slugs
 

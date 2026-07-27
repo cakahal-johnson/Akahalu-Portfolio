@@ -11,6 +11,7 @@ from app.api.v1.endpoints.health import router as health_router
 
 from app.api.v1.endpoints.portfolio import (
     admin_portfolio_categories_router,
+    admin_portfolio_project_links_router,
     admin_portfolio_project_media_router,
     admin_portfolio_projects_router,
     admin_portfolio_technologies_router,
@@ -50,6 +51,11 @@ api_router.include_router(
     admin_portfolio_projects_router,
 )
 
+
 api_router.include_router(
     admin_portfolio_project_media_router,
+)
+
+api_router.include_router(
+    admin_portfolio_project_links_router,
 )

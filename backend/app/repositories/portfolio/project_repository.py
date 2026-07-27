@@ -142,6 +142,9 @@ class ProjectRepository(
                 Project.published_at.is_not(None),
                 Project.deleted_at.is_(None),
             )
+            .execution_options(
+                populate_existing=True,
+            )
             .options(
                 selectinload(Project.media),
                 selectinload(Project.links),
@@ -318,6 +321,9 @@ class ProjectRepository(
         statement = (
             select(Project)
             .where(*filters)
+            .execution_options(
+                populate_existing=True,
+            )
             .options(
                 selectinload(Project.media),
                 selectinload(Project.links),
@@ -393,6 +399,9 @@ class ProjectRepository(
                 Project.published_at.is_not(None),
                 Project.is_featured.is_(True),
                 Project.deleted_at.is_(None),
+            )
+            .execution_options(
+                populate_existing=True,
             )
             .options(
                 selectinload(Project.media),
