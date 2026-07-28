@@ -6,6 +6,12 @@ from app.api.v1.endpoints.account_lifecycle import (
 from app.api.v1.endpoints.admin_users import (
     router as admin_users_router,
 )
+
+from app.api.v1.endpoints.contact import (
+    admin_contact_inquiries_router,
+    public_contact_inquiries_router,
+)
+
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.health import router as health_router
 
@@ -37,6 +43,12 @@ api_router.include_router(
 )
 api_router.include_router(
     admin_users_router,
+)
+api_router.include_router(
+    public_contact_inquiries_router,
+)
+api_router.include_router(
+    admin_contact_inquiries_router,
 )
 api_router.include_router(
     public_portfolio_router,

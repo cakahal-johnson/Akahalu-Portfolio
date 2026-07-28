@@ -59,6 +59,18 @@ class Settings(BaseSettings):
     jwt_issuer: str = "akahalu-portfolio-api"
     jwt_audience: str = "akahalu-portfolio-web"
 
+    contact_hash_secret_key: str
+    contact_duplicate_window_minutes: int = Field(
+        default=15,
+        ge=1,
+        le=1440,
+    )
+    contact_user_agent_max_length: int = Field(
+        default=500,
+        ge=100,
+        le=512,
+    )
+
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 30
 

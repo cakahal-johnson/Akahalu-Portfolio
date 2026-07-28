@@ -26,6 +26,9 @@ from app.models.project_link import ProjectLink
 from app.models.project_media import ProjectMedia
 from app.models.project_technology import ProjectTechnology
 
+# Contact
+from app.models.contact_inquiry import ContactInquiry
+
 
 __all__ = [
     "Base",
@@ -48,4 +51,6 @@ __all__ = [
     "ProjectTechnologyAssociation",
     "ProjectMedia",
     "ProjectLink",
+    # Contact
+    "ContactInquiry",
 ]

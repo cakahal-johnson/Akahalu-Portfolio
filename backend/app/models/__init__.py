@@ -2,6 +2,7 @@ from app.models.associations import (
     role_permissions,
     user_roles,
 )
+from app.models.contact_inquiry import ContactInquiry
 from app.models.login_attempt import LoginAttempt
 from app.models.permission import Permission
 from app.models.project import Project
@@ -17,6 +18,7 @@ from app.models.user import User
 
 
 __all__ = [
+    "ContactInquiry",
     "LoginAttempt",
     "Permission",
     "Project",
