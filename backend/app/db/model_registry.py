@@ -29,6 +29,9 @@ from app.models.project_technology import ProjectTechnology
 # Contact
 from app.models.contact_inquiry import ContactInquiry
 
+# Portfolio
+from app.models.profile import Profile
+
 
 __all__ = [
     "Base",
@@ -53,4 +56,6 @@ __all__ = [
     "ProjectLink",
     # Contact
     "ContactInquiry",
+    # Portfolio
+    "Profile",
 ]

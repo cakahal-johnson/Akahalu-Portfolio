@@ -88,6 +88,18 @@ from app.schemas.portfolio.project_technology import (
     ProjectTechnologyUpdate,
 )
 
+from app.schemas.portfolio.profile import (
+    ProfileAdminRead,
+    ProfileAvailabilityStatus,
+    ProfileBase,
+    ProfileCreate,
+    ProfileDeleteRequest,
+    ProfileRead,
+    ProfileRestoreRequest,
+    ProfileUpdate,
+    ProfileVisibilityUpdate,
+)
+
 __all__ = [
     "AdminProjectCategoryListQuery",
     "AdminProjectCategoryListResponse",
@@ -101,6 +113,15 @@ __all__ = [
     "PaginatedResponse",
     "PaginationQuery",
     "PortfolioSearchQuery",
+    "ProfileAdminRead",
+    "ProfileAvailabilityStatus",
+    "ProfileBase",
+    "ProfileCreate",
+    "ProfileDeleteRequest",
+    "ProfileRead",
+    "ProfileRestoreRequest",
+    "ProfileUpdate",
+    "ProfileVisibilityUpdate",
     "ProjectAdminRead",
     "ProjectBase",
     "ProjectCategoryAdminRead",

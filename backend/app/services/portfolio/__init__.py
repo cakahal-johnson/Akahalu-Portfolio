@@ -44,6 +44,14 @@ from app.services.portfolio.project_technology_service import (
     ProjectTechnologyService,
     project_technology_service,
 )
+from app.services.portfolio.profile_service import (
+    ProfileAlreadyExistsError,
+    ProfileDeletedError,
+    ProfileNotFoundError,
+    ProfileService,
+    ProfileValidationError,
+    profile_service,
+)
 
 __all__ = [
     "ProjectCategoryConflictError",
@@ -76,4 +84,10 @@ __all__ = [
     "project_media_service",
     "project_service",
     "project_technology_service",
+    "ProfileAlreadyExistsError",
+    "ProfileDeletedError",
+    "ProfileNotFoundError",
+    "ProfileService",
+    "ProfileValidationError",
+    "profile_service",
 ]

@@ -18,6 +18,10 @@ from app.repositories.portfolio.project_technology_repository import (
     ProjectTechnologyRepository,
     project_technology_repository,
 )
+from app.repositories.portfolio.profile_repository import (
+    ProfileRepository,
+    profile_repository,
+)
 
 __all__ = [
     "ProjectCategoryRepository",
@@ -30,4 +34,6 @@ __all__ = [
     "project_media_repository",
     "project_repository",
     "project_technology_repository",
+    "ProfileRepository",
+    "profile_repository",
 ]
