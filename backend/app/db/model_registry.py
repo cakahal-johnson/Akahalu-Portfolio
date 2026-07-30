@@ -17,6 +17,8 @@ from app.models.session import Session
 from app.models.user import User
 
 # Portfolio
+from app.models.experience import Experience
+from app.models.profile import Profile
 from app.models.project import Project
 from app.models.project_associations import (
     ProjectTechnologyAssociation,
@@ -29,16 +31,13 @@ from app.models.project_technology import ProjectTechnology
 # Contact
 from app.models.contact_inquiry import ContactInquiry
 
-# Portfolio
-from app.models.profile import Profile
-
 
 __all__ = [
     "Base",
     # Association tables
     "role_permissions",
     "user_roles",
-    # Identity
+    # Identity & Security
     "EmailVerificationToken",
     "LoginAttempt",
     "PasswordResetToken",
@@ -48,6 +47,8 @@ __all__ = [
     "Session",
     "User",
     # Portfolio
+    "Experience",
+    "Profile",
     "Project",
     "ProjectCategory",
     "ProjectTechnology",
@@ -56,6 +57,4 @@ __all__ = [
     "ProjectLink",
     # Contact
     "ContactInquiry",
-    # Portfolio
-    "Profile",
 ]

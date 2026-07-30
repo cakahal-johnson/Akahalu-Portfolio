@@ -1,5 +1,20 @@
 """Portfolio service-layer exports."""
 
+from app.services.portfolio.experience_service import (
+    ExperienceConflictError,
+    ExperienceLifecycleError,
+    ExperienceNotFoundError,
+    ExperienceService,
+    experience_service,
+)
+from app.services.portfolio.profile_service import (
+    ProfileAlreadyExistsError,
+    ProfileDeletedError,
+    ProfileNotFoundError,
+    ProfileService,
+    ProfileValidationError,
+    profile_service,
+)
 from app.services.portfolio.project_category_service import (
     ProjectCategoryConflictError,
     ProjectCategoryInUseError,
@@ -44,16 +59,18 @@ from app.services.portfolio.project_technology_service import (
     ProjectTechnologyService,
     project_technology_service,
 )
-from app.services.portfolio.profile_service import (
-    ProfileAlreadyExistsError,
-    ProfileDeletedError,
-    ProfileNotFoundError,
-    ProfileService,
-    ProfileValidationError,
-    profile_service,
-)
+
 
 __all__ = [
+    "ExperienceConflictError",
+    "ExperienceLifecycleError",
+    "ExperienceNotFoundError",
+    "ExperienceService",
+    "ProfileAlreadyExistsError",
+    "ProfileDeletedError",
+    "ProfileNotFoundError",
+    "ProfileService",
+    "ProfileValidationError",
     "ProjectCategoryConflictError",
     "ProjectCategoryInUseError",
     "ProjectCategoryNotFoundError",
@@ -79,15 +96,11 @@ __all__ = [
     "ProjectTechnologyService",
     "ProjectTechnologyUnavailableError",
     "TechnologyAssignmentData",
+    "experience_service",
+    "profile_service",
     "project_category_service",
     "project_link_service",
     "project_media_service",
     "project_service",
     "project_technology_service",
-    "ProfileAlreadyExistsError",
-    "ProfileDeletedError",
-    "ProfileNotFoundError",
-    "ProfileService",
-    "ProfileValidationError",
-    "profile_service",
 ]

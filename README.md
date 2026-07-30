@@ -137,7 +137,7 @@ uv run pytest
 - [x] CMS
 - [x] Media Management
 - [x] Blog Module
-- [ ] Contact API
+- [x] Contact API
 - [ ] Next.js Frontend
 - [ ] Admin Dashboard
 - [ ] CI/CD Pipeline

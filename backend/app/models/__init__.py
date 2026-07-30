@@ -3,8 +3,10 @@ from app.models.associations import (
     user_roles,
 )
 from app.models.contact_inquiry import ContactInquiry
+from app.models.experience import Experience
 from app.models.login_attempt import LoginAttempt
 from app.models.permission import Permission
+from app.models.profile import Profile
 from app.models.project import Project
 from app.models.project_associations import ProjectTechnologyAssociation
 from app.models.project_category import ProjectCategory
@@ -19,8 +21,10 @@ from app.models.user import User
 
 __all__ = [
     "ContactInquiry",
+    "Experience",
     "LoginAttempt",
     "Permission",
+    "Profile",
     "Project",
     "ProjectCategory",
     "ProjectTechnology",
