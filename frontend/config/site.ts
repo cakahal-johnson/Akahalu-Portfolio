@@ -1,11 +1,18 @@
+import { env } from "@/config/env"
+
 export const siteConfig = {
   name: "Akahalu Vitalis",
   shortName: "Akahalu",
+  initials: "AV",
+
   title: "Akahalu Vitalis | Full-Stack Software Developer",
+
   description:
     "Portfolio of Akahalu Vitalis, a full-stack software developer building secure web APIs, responsive web applications, and mobile-ready digital products.",
-  url: "http://localhost:3000",
-  apiUrl: "http://127.0.0.1:8000/api/v1",
+
+  url: env.appUrl,
+  apiUrl: env.apiUrl,
+
   navigation: [
     {
       label: "Home",
