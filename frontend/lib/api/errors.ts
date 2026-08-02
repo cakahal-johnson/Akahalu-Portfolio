@@ -1,6 +1,9 @@
 import axios from "axios"
 
-import type { ApiErrorBody } from "@/types/api"
+import type {
+  ApiErrorBody,
+  ApiErrorDetail,
+} from "@/types/api"
 
 const DEFAULT_ERROR_MESSAGE =
   "An unexpected error occurred. Please try again."
@@ -38,6 +41,15 @@ export class ApiError extends Error {
   }
 }
 
+function isApiErrorDetail(
+  value: unknown
+): value is ApiErrorDetail {
+  return (
+    typeof value === "object" &&
+    value !== null
+  )
+}
+
 function extractErrorMessage(
   body: ApiErrorBody | null,
   fallback: string
@@ -46,8 +58,15 @@ function extractErrorMessage(
     return body.message
   }
 
-  if (body?.detail) {
+  if (typeof body?.detail === "string") {
     return body.detail
+  }
+
+  if (
+    isApiErrorDetail(body?.detail) &&
+    body.detail.message
+  ) {
+    return body.detail.message
   }
 
   if (body?.errors?.length) {
@@ -59,7 +78,27 @@ function extractErrorMessage(
   return fallback || DEFAULT_ERROR_MESSAGE
 }
 
-export function normalizeApiError(error: unknown): ApiError {
+function extractErrorCode(
+  body: ApiErrorBody | null,
+  fallbackCode: string | null
+): string | null {
+  if (body?.code) {
+    return body.code
+  }
+
+  if (
+    isApiErrorDetail(body?.detail) &&
+    body.detail.code
+  ) {
+    return body.detail.code
+  }
+
+  return fallbackCode
+}
+
+export function normalizeApiError(
+  error: unknown
+): ApiError {
   if (error instanceof ApiError) {
     return error
   }
@@ -74,8 +113,11 @@ export function normalizeApiError(error: unknown): ApiError {
     })
   }
 
-  const responseBody = error.response?.data ?? null
-  const status = error.response?.status ?? null
+  const responseBody =
+    error.response?.data ?? null
+
+  const status =
+    error.response?.status ?? null
 
   const isNetworkError =
     !error.response &&
@@ -90,17 +132,22 @@ export function normalizeApiError(error: unknown): ApiError {
       responseBody,
       fallbackMessage
     ),
+
     status,
-    code:
-      responseBody?.code ??
-      error.code ??
-      null,
+
+    code: extractErrorCode(
+      responseBody,
+      error.code ?? null
+    ),
+
     details: responseBody,
     isNetworkError,
     cause: error,
   })
 }
 
-export function isApiError(error: unknown): error is ApiError {
+export function isApiError(
+  error: unknown
+): error is ApiError {
   return error instanceof ApiError
 }

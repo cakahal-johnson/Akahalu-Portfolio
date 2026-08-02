@@ -1,7 +1,15 @@
+import type {
+  ProjectTechnologyCategory,
+  PublicExperienceListParams,
+  PublicProjectListParams,
+} from "@/types/portfolio"
+
 export const queryKeys = {
   health: {
     all: ["health"] as const,
+
     live: ["health", "live"] as const,
+
     ready: ["health", "ready"] as const,
   },
 
@@ -11,22 +19,84 @@ export const queryKeys = {
     profile: () =>
       ["portfolio", "profile"] as const,
 
-    projects: () =>
-      ["portfolio", "projects"] as const,
-
-    project: (slug: string) =>
-      ["portfolio", "projects", slug] as const,
-
     categories: () =>
       ["portfolio", "categories"] as const,
 
-    technologies: () =>
-      ["portfolio", "technologies"] as const,
+    category: (slug: string) =>
+      [
+        "portfolio",
+        "categories",
+        slug,
+      ] as const,
+
+    technologies: (
+      category?: ProjectTechnologyCategory
+    ) =>
+      [
+        "portfolio",
+        "technologies",
+        {
+          category: category ?? null,
+        },
+      ] as const,
 
     technology: (slug: string) =>
-      ["portfolio", "technologies", slug] as const,
+      [
+        "portfolio",
+        "technologies",
+        slug,
+      ] as const,
 
-    experiences: () =>
-      ["portfolio", "experiences"] as const,
+    projects: (
+      params: PublicProjectListParams = {}
+    ) =>
+      [
+        "portfolio",
+        "projects",
+        params,
+      ] as const,
+
+    featuredProjects: (limit = 6) =>
+      [
+        "portfolio",
+        "projects",
+        "featured",
+        {
+          limit,
+        },
+      ] as const,
+
+    project: (slug: string) =>
+      [
+        "portfolio",
+        "projects",
+        slug,
+      ] as const,
+
+    experiences: (
+      params: PublicExperienceListParams = {}
+    ) =>
+      [
+        "portfolio",
+        "experiences",
+        params,
+      ] as const,
+
+    featuredExperiences: (limit = 6) =>
+      [
+        "portfolio",
+        "experiences",
+        "featured",
+        {
+          limit,
+        },
+      ] as const,
+
+    experience: (slug: string) =>
+      [
+        "portfolio",
+        "experiences",
+        slug,
+      ] as const,
   },
 } as const

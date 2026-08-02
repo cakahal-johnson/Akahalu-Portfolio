@@ -14,16 +14,33 @@ export const apiEndpoints = {
 
   portfolio: {
     profile: "/portfolio/profile",
-    projects: "/portfolio/projects",
+
     categories: "/portfolio/categories",
+
+    categoryBySlug: (slug: string) =>
+      `/portfolio/categories/${encodeURIComponent(slug)}`,
+
     technologies: "/portfolio/technologies",
-    experiences: "/portfolio/experiences",
+
+    technologyBySlug: (slug: string) =>
+      `/portfolio/technologies/${encodeURIComponent(slug)}`,
+
+    projects: "/portfolio/projects",
+
+    featuredProjects:
+      "/portfolio/projects/featured",
 
     projectBySlug: (slug: string) =>
       `/portfolio/projects/${encodeURIComponent(slug)}`,
 
-    technologyBySlug: (slug: string) =>
-      `/portfolio/technologies/${encodeURIComponent(slug)}`,
+    experiences:
+      "/portfolio/experiences",
+
+    featuredExperiences:
+      "/portfolio/experiences/featured",
+
+    experienceBySlug: (slug: string) =>
+      `/portfolio/experiences/${encodeURIComponent(slug)}`,
   },
 
   contact: {

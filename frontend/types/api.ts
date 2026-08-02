@@ -10,33 +10,27 @@ export type ApiFieldError = {
   code?: string
 }
 
+export type ApiErrorDetail = {
+  code?: string
+  message?: string
+}
+
 export type ApiErrorBody = {
-  detail?: string
+  detail?: string | ApiErrorDetail
   message?: string
   code?: string
   errors?: ApiFieldError[]
-}
-
-export type ApiPagination = {
-  page: number
-  page_size: number
-  total: number
-  total_pages: number
 }
 
 export type PaginatedApiResponse<T> = {
   items: T[]
   page: number
   page_size: number
-  total: number
+  total_items: number
   total_pages: number
+  has_next_page: boolean
+  has_previous_page: boolean
 }
-
-export type ApiListResponse<T> =
-  | T[]
-  | {
-      items: T[]
-    }
 
 export type ApiRequestParams = Record<
   string,
