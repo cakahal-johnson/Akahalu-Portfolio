@@ -1,20 +1,17 @@
-import type {
-  Metadata,
-} from "next"
+import type { Metadata } from "next"
 import {
-    ArrowLeft, ArrowRight,
-    ArrowUpRight,
-    CalendarDays,
-    CheckCircle2,
-    Code2,
-    ExternalLink,
-    Layers3,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
+  CheckCircle2,
+  Code2,
+  ExternalLink,
+  Layers3,
 } from "lucide-react"
-import { FaGithub } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa"
 import Link from "next/link"
-import {
-  notFound,
-} from "next/navigation"
+import { notFound } from "next/navigation"
 
 import { Container } from "@/components/shared/container"
 import { Button } from "@/components/ui/button"
