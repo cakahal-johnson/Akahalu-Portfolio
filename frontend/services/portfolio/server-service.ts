@@ -2,6 +2,7 @@ import { apiEndpoints } from "@/lib/api"
 import { serverApiGet } from "@/lib/api/server"
 
 import type {
+  ExperienceRead,
   ExperienceSummary,
   ProfileRead,
   ProjectCategoryRead,
@@ -12,6 +13,26 @@ import type {
   ProjectTechnologyRead,
   PublicProjectListParams,
 } from "@/types/portfolio"
+
+export type PublicExperienceListParams = {
+  page?: number
+  page_size?: number
+  search?: string
+  employment_type?: string
+  location_type?: string
+  is_current?: boolean
+  is_featured?: boolean
+}
+
+export type ExperienceListResponse = {
+  items: ExperienceSummary[]
+  page: number
+  page_size: number
+  total_items: number
+  total_pages: number
+  has_next_page: boolean
+  has_previous_page: boolean
+}
 
 function buildQueryString(
   params: Record<
@@ -105,6 +126,32 @@ export const serverPortfolioService = {
       `${apiEndpoints.portfolio.technologies}${buildQueryString({
         category,
       })}`
+    )
+  },
+
+  getExperiences(
+    params: PublicExperienceListParams = {}
+  ): Promise<ExperienceListResponse> {
+    return serverApiGet<ExperienceListResponse>(
+      `${apiEndpoints.portfolio.experiences}${buildQueryString({
+        page: params.page,
+        page_size: params.page_size,
+        search: params.search,
+        employment_type: params.employment_type,
+        location_type: params.location_type,
+        is_current: params.is_current,
+        is_featured: params.is_featured,
+      })}`
+    )
+  },
+
+  getExperienceBySlug(
+    slug: string
+  ): Promise<ExperienceRead> {
+    return serverApiGet<ExperienceRead>(
+      `${apiEndpoints.portfolio.experiences}/${encodeURIComponent(
+        slug
+      )}`
     )
   },
 
