@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 
-import { siteConfig } from "@/config/site"
 import { QueryProvider } from "@/components/providers/query-provider"
+import { siteConfig } from "@/config/site"
+
 import "./globals.css"
 
 const geistSans = Geist({
@@ -17,19 +18,25 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+
   title: {
     default: siteConfig.title,
     template: `%s | ${siteConfig.name}`,
   },
+
   description: siteConfig.description,
+
   applicationName: siteConfig.name,
+
   authors: [
     {
       name: siteConfig.name,
     },
   ],
+
   creator: siteConfig.name,
   publisher: siteConfig.name,
+
   openGraph: {
     type: "website",
     locale: "en_CA",
@@ -38,6 +45,7 @@ export const metadata: Metadata = {
     title: siteConfig.title,
     description: siteConfig.description,
   },
+
   twitter: {
     card: "summary_large_image",
     title: siteConfig.title,
@@ -59,11 +67,16 @@ export default function RootLayout({
   children,
 }: RootLayoutProps) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      suppressHydrationWarning
+    >
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-background font-sans text-foreground antialiased`}
       >
-       <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   )
