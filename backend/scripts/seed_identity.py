@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from pydantic import EmailStr, TypeAdapter, ValidationError
 
+import app.db.model_registry  # noqa: F401
 from app.db.session import async_session_factory
 from app.models.permission import Permission
 from app.services.identity_service import identity_service
