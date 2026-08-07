@@ -15,8 +15,12 @@ import app.db.model_registry  # noqa: F401
 from app.db.session import async_session_factory
 from app.models.project import Project
 from app.models.project_category import ProjectCategory
+from app.models.project_link import ProjectLink
+from app.models.project_media import ProjectMedia
 from app.models.project_technology import ProjectTechnology
 from app.schemas.portfolio.common import (
+    ProjectLinkType,
+    ProjectMediaType,
     ProjectStatus,
     ProjectTechnologyCategory,
     ProjectVisibility,
@@ -36,6 +40,14 @@ from app.schemas.portfolio.project_category import (
     ProjectCategoryCreate,
     ProjectCategoryUpdate,
 )
+from app.schemas.portfolio.project_link import (
+    ProjectLinkCreate,
+    ProjectLinkUpdate,
+)
+from app.schemas.portfolio.project_media import (
+    ProjectMediaCreate,
+    ProjectMediaUpdate,
+)
 from app.schemas.portfolio.project_technology import (
     ProjectTechnologyCreate,
     ProjectTechnologyUpdate,
@@ -47,6 +59,12 @@ from app.services.portfolio.profile_service import (
 from app.services.portfolio.project_category_service import (
     ProjectCategoryNotFoundError,
     project_category_service,
+)
+from app.services.portfolio.project_link_service import (
+    project_link_service,
+)
+from app.services.portfolio.project_media_service import (
+    project_media_service,
 )
 from app.services.portfolio.project_service import (
     ProjectNotFoundError,
@@ -63,6 +81,7 @@ class PortfolioSeedInput:
     primary_email: str
     is_public: bool
     years_of_experience: int
+    project_image_url: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -270,6 +289,15 @@ def parse_arguments() -> argparse.Namespace:
         help="Years of professional experience to publish. Defaults to 0.",
     )
 
+    parser.add_argument(
+        "--project-image-url",
+        help=(
+            "Optional HTTPS URL for the primary Akahalu Portfolio "
+            "project screenshot. If omitted, existing project media "
+            "and thumbnail data are preserved."
+        ),
+    )
+
     return parser.parse_args()
 
 
@@ -325,10 +353,20 @@ def collect_seed_input(
             "Years of experience cannot be negative.",
         )
 
+    raw_project_image_url = arguments.project_image_url
+
+    project_image_url: str | None = None
+
+    if raw_project_image_url:
+        project_image_url = parse_resource_url(
+            str(raw_project_image_url),
+        )
+
     return PortfolioSeedInput(
         primary_email=primary_email,
         is_public=not arguments.private,
         years_of_experience=years_of_experience,
+        project_image_url=project_image_url,
     )
 
 
@@ -837,9 +875,6 @@ def build_project_update_payload(
         repository_url=parse_resource_url(
             "https://github.com/cakahal-johnson/Akahalu-Portfolio"
         ),
-        live_url=None,
-        case_study_url=None,
-        thumbnail_url=None,
         seo_title=("Akahalu Portfolio | Full-Stack Software Project"),
         seo_description=(
             "A production-ready portfolio platform built with FastAPI, "
@@ -910,6 +945,173 @@ async def seed_akahalu_portfolio_project(
     return project
 
 
+async def ensure_repository_link(
+    session: AsyncSession,
+    project: Project,
+) -> ProjectLink:
+    repository_url = parse_resource_url(
+        "https://github.com/cakahal-johnson/Akahalu-Portfolio"
+    )
+
+    existing_links = await project_link_service.list_for_project(
+        session,
+        project.id,
+        include_inactive=True,
+        include_deleted=True,
+    )
+
+    repository_link = next(
+        (
+            link
+            for link in existing_links
+            if (
+                link.url == repository_url
+                or link.label.strip().lower() == "source code"
+            )
+        ),
+        None,
+    )
+
+    if repository_link is None:
+        return await project_link_service.create(
+            session,
+            project.id,
+            ProjectLinkCreate(
+                label="Source code",
+                url=repository_url,
+                link_type=ProjectLinkType.REPOSITORY,
+                icon="github",
+                opens_in_new_tab=True,
+                is_active=True,
+                sort_order=1,
+            ),
+        )
+
+    if repository_link.deleted_at is not None:
+        repository_link = await project_link_service.restore(
+            session,
+            repository_link.id,
+            restore_as_active=True,
+        )
+
+    repository_link = await project_link_service.update(
+        session,
+        repository_link.id,
+        ProjectLinkUpdate(
+            label="Source code",
+            url=repository_url,
+            link_type=ProjectLinkType.REPOSITORY,
+            icon="github",
+            opens_in_new_tab=True,
+            is_active=True,
+            sort_order=1,
+        ),
+    )
+
+    if not repository_link.is_active:
+        repository_link = await project_link_service.set_active(
+            session,
+            repository_link.id,
+            is_active=True,
+        )
+
+    return repository_link
+
+
+async def ensure_primary_project_media(
+    session: AsyncSession,
+    project: Project,
+    image_url: str,
+) -> ProjectMedia:
+    existing_media, _ = await project_media_service.list_for_admin(
+        session,
+        project_id=project.id,
+        offset=0,
+        limit=100,
+        include_deleted=True,
+        sort_by="sort_order",
+        sort_direction="asc",
+    )
+
+    media = next(
+        (item for item in existing_media if item.url == image_url),
+        None,
+    )
+
+    if media is None:
+        media = await project_media_service.create(
+            session,
+            project.id,
+            ProjectMediaCreate(
+                media_type=ProjectMediaType.IMAGE,
+                url=parse_resource_url(
+                    image_url,
+                ),
+                thumbnail_url=None,
+                alt_text=("Akahalu Portfolio full-stack project interface"),
+                caption=(
+                    "Akahalu Portfolio, a production-ready "
+                    "FastAPI and Next.js portfolio platform."
+                ),
+                provider=None,
+                provider_asset_id=None,
+                mime_type=None,
+                width=None,
+                height=None,
+                file_size_bytes=None,
+                duration_seconds=None,
+                is_primary=True,
+                sort_order=1,
+            ),
+        )
+    else:
+        if media.deleted_at is not None:
+            media = await project_media_service.restore(
+                session,
+                media.id,
+                restore_as_primary=True,
+            )
+
+        media = await project_media_service.update(
+            session,
+            media.id,
+            ProjectMediaUpdate(
+                media_type=ProjectMediaType.IMAGE,
+                alt_text=("Akahalu Portfolio full-stack project interface"),
+                caption=(
+                    "Akahalu Portfolio, a production-ready "
+                    "FastAPI and Next.js portfolio platform."
+                ),
+                is_primary=True,
+                sort_order=1,
+            ),
+        )
+
+        if not media.is_primary:
+            media = await project_media_service.set_primary(
+                session,
+                media.id,
+            )
+
+    return media
+
+
+async def sync_project_thumbnail(
+    session: AsyncSession,
+    project: Project,
+    image_url: str,
+) -> Project:
+    return await project_service.update(
+        session,
+        project.id,
+        ProjectUpdate(
+            thumbnail_url=parse_resource_url(
+                image_url,
+            ),
+        ),
+    )
+
+
 async def seed_portfolio(
     seed_input: PortfolioSeedInput,
 ) -> None:
@@ -934,6 +1136,26 @@ async def seed_portfolio(
                 technologies=technologies,
             )
 
+            repository_link = await ensure_repository_link(
+                session,
+                project,
+            )
+
+            project_media: ProjectMedia | None = None
+
+            if seed_input.project_image_url is not None:
+                project_media = await ensure_primary_project_media(
+                    session,
+                    project,
+                    seed_input.project_image_url,
+                )
+
+                project = await sync_project_thumbnail(
+                    session,
+                    project,
+                    seed_input.project_image_url,
+                )
+
             await session.commit()
 
             print()
@@ -947,6 +1169,12 @@ async def seed_portfolio(
             print(f"Project status: {project.status}")
             print(f"Project visibility: {project.visibility}")
             print(f"Project featured: {project.is_featured}")
+            print(f"Repository link: {repository_link.url}")
+
+            if project_media is not None:
+                print(f"Primary media: {project_media.url}")
+            else:
+                print("Primary media: unchanged (no --project-image-url supplied)")
         except Exception:
             await session.rollback()
             raise
