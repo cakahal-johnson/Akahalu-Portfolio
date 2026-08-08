@@ -5,6 +5,7 @@ import {
   Eye,
   EyeOff,
   Loader2,
+  LockKeyhole,
   Star,
 } from "lucide-react"
 import Link from "next/link"
@@ -58,13 +59,26 @@ export function AdminProjectCard({
   onToggleFeatured,
 }: AdminProjectCardProps) {
   const deleted =
-    project.deleted_at !== null
+    project.deleted_at !==
+    null
 
-  const canFeature =
+  const published =
     project.status ===
-      "published" &&
+    "published"
+
+  const publiclyViewable =
+    published &&
     project.visibility ===
       "public" &&
+    project.published_at !==
+      null &&
+    !deleted
+
+  const canFeature =
+    publiclyViewable
+
+  const canChangeVisibility =
+    published &&
     !deleted
 
   return (
@@ -152,6 +166,44 @@ export function AdminProjectCard({
               </strong>
             </span>
           </div>
+
+          {!deleted &&
+          !published ? (
+            <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
+              <LockKeyhole
+                className="mt-0.5 size-3.5 shrink-0"
+                aria-hidden="true"
+              />
+
+              <span>
+                Draft projects stay
+                private and cannot be
+                featured or viewed on the
+                public portfolio until
+                they are published.
+              </span>
+            </div>
+          ) : null}
+
+          {published &&
+          project.visibility !==
+            "public" &&
+          !deleted ? (
+            <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-xs leading-5 text-muted-foreground">
+              <EyeOff
+                className="mt-0.5 size-3.5 shrink-0"
+                aria-hidden="true"
+              />
+
+              <span>
+                This project is published
+                but is not publicly
+                visible. Make it public
+                before featuring or
+                opening its public page.
+              </span>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -160,13 +212,19 @@ export function AdminProjectCard({
             variant="outline"
             size="sm"
             disabled={
-              deleted ||
-              busyAction !== null
+              !canChangeVisibility ||
+              busyAction !==
+                null
             }
             onClick={() =>
               onToggleVisibility(
                 project
               )
+            }
+            title={
+              canChangeVisibility
+                ? undefined
+                : "Publish the project before changing public visibility."
             }
           >
             {busyAction ===
@@ -202,7 +260,8 @@ export function AdminProjectCard({
             size="sm"
             disabled={
               !canFeature ||
-              busyAction !== null
+              busyAction !==
+                null
             }
             onClick={() =>
               onToggleFeatured(
@@ -232,7 +291,7 @@ export function AdminProjectCard({
               : "Feature"}
           </Button>
 
-          {!deleted ? (
+          {publiclyViewable ? (
             <Button
               asChild
               variant="ghost"

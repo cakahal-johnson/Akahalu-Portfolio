@@ -42,6 +42,7 @@ import type {
 } from "@/types/portfolio"
 
 const PAGE_SIZE = 10
+const SEARCH_DEBOUNCE_MS = 750
 
 export function AdminProjectManager() {
   const [
@@ -77,6 +78,14 @@ export function AdminProjectManager() {
     )
 
   const [
+    debouncedSearch,
+    setDebouncedSearch,
+  ] =
+    useState(
+      defaultProjectAdminFilters.search
+    )
+
+  const [
     page,
     setPage,
   ] =
@@ -108,6 +117,38 @@ export function AdminProjectManager() {
     } | null>(null)
 
   useEffect(() => {
+    const timeoutId =
+      window.setTimeout(
+        () => {
+          setLoading(
+            true
+          )
+
+          setError(
+            null
+          )
+
+          setPage(
+            1
+          )
+
+          setDebouncedSearch(
+            filters.search
+          )
+        },
+        SEARCH_DEBOUNCE_MS
+      )
+
+    return () => {
+      window.clearTimeout(
+        timeoutId
+      )
+    }
+  }, [
+    filters.search,
+  ])
+
+  useEffect(() => {
     let cancelled =
       false
 
@@ -115,11 +156,12 @@ export function AdminProjectManager() {
       adminProjectService.getProjects(
         {
           page,
+
           page_size:
             PAGE_SIZE,
 
           search:
-            filters.search.trim() ||
+            debouncedSearch.trim() ||
             undefined,
 
           category_id:
@@ -173,7 +215,10 @@ export function AdminProjectManager() {
         }
       )
       .catch(
-        (caughtError: unknown) => {
+        (
+          caughtError:
+            unknown
+        ) => {
           if (cancelled) {
             return
           }
@@ -202,8 +247,16 @@ export function AdminProjectManager() {
       cancelled = true
     }
   }, [
-    filters,
     page,
+    debouncedSearch,
+    filters.categoryId,
+    filters.technologyId,
+    filters.status,
+    filters.visibility,
+    filters.featured,
+    filters.includeDeleted,
+    filters.sortBy,
+    filters.sortDirection,
   ])
 
   useEffect(() => {
@@ -265,15 +318,64 @@ export function AdminProjectManager() {
   function changeFilters(
     nextFilters: ProjectAdminFilterState
   ) {
-    beginProjectReload()
+    const searchChanged =
+      nextFilters.search !==
+      filters.search
+
+    const nonSearchFilterChanged =
+      nextFilters.categoryId !==
+        filters.categoryId ||
+      nextFilters.technologyId !==
+        filters.technologyId ||
+      nextFilters.status !==
+        filters.status ||
+      nextFilters.visibility !==
+        filters.visibility ||
+      nextFilters.featured !==
+        filters.featured ||
+      nextFilters.includeDeleted !==
+        filters.includeDeleted ||
+      nextFilters.sortBy !==
+        filters.sortBy ||
+      nextFilters.sortDirection !==
+        filters.sortDirection
+
+    if (
+      nonSearchFilterChanged
+    ) {
+      beginProjectReload()
+
+      /*
+       * If a user changes another filter
+       * while a search debounce is pending,
+       * immediately apply the latest search
+       * value to the new filter request.
+       */
+      setDebouncedSearch(
+        nextFilters.search
+      )
+
+      setPage(
+        1
+      )
+    }
 
     setFilters(
       nextFilters
     )
 
-    setPage(
-      1
-    )
+    /*
+     * Search-only changes deliberately do
+     * not change page/loading here.
+     * The debounce callback performs those
+     * updates after the user pauses typing.
+     */
+    if (
+      searchChanged &&
+      !nonSearchFilterChanged
+    ) {
+      return
+    }
   }
 
   function resetFilters() {
@@ -281,6 +383,10 @@ export function AdminProjectManager() {
 
     setFilters(
       defaultProjectAdminFilters
+    )
+
+    setDebouncedSearch(
+      defaultProjectAdminFilters.search
     )
 
     setPage(
@@ -340,6 +446,7 @@ export function AdminProjectManager() {
       setBusyProject({
         id:
           project.id,
+
         action:
           "visibility",
       })
@@ -391,6 +498,7 @@ export function AdminProjectManager() {
       setBusyProject({
         id:
           project.id,
+
         action:
           "featured",
       })
@@ -461,7 +569,9 @@ export function AdminProjectManager() {
       </div>
 
       <AdminProjectFilters
-        filters={filters}
+        filters={
+          filters
+        }
         categories={
           categories
         }

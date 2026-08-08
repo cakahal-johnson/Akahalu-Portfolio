@@ -23,6 +23,50 @@ import type {
   PaginatedApiResponse,
 } from "@/types/api"
 
+export type ProjectTechnologyAssignmentCreate = {
+  technology_id: string
+
+  is_featured?: boolean
+
+  sort_order?: number
+}
+
+export type ProjectCreate = {
+  title: string
+  slug: string
+
+  short_description: string
+  description: string
+
+  problem_statement?: string | null
+  solution_summary?: string | null
+  key_features?: string | null
+  technical_highlights?: string | null
+
+  category_id?: string | null
+
+  status?: ProjectStatus
+  visibility?: ProjectVisibility
+
+  is_featured?: boolean
+  sort_order?: number
+
+  repository_url?: string | null
+  live_url?: string | null
+  case_study_url?: string | null
+  thumbnail_url?: string | null
+
+  started_at?: string | null
+  completed_at?: string | null
+  published_at?: string | null
+
+  seo_title?: string | null
+  seo_description?: string | null
+
+  technology_assignments?:
+    ProjectTechnologyAssignmentCreate[]
+}
+
 export type ProjectSummary = {
   id: string
 
@@ -70,7 +114,9 @@ export type ProjectRead =
 
 export type ProjectTechnologyAssignmentRead = {
   technology: ProjectTechnologySummary
+
   is_featured: boolean
+
   sort_order: number
 }
 
@@ -185,16 +231,20 @@ export type AdminProjectListParams = {
 
 export type ProjectStatusUpdate = {
   status: ProjectStatus
+
   published_at?: string | null
+
   reason?: string | null
 }
 
 export type ProjectVisibilityUpdate = {
   visibility: ProjectVisibility
+
   reason?: string | null
 }
 
 export type ProjectFeaturedUpdate = {
   is_featured: boolean
+
   reason?: string | null
 }

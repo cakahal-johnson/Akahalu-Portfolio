@@ -6,6 +6,7 @@ import type {
   AdminProjectListParams,
   AdminProjectListResponse,
   ProjectAdminRead,
+  ProjectCreate,
   ProjectFeaturedUpdate,
   ProjectVisibilityUpdate,
 } from "@/types/portfolio/project"
@@ -104,6 +105,21 @@ export const adminProjectService =
         `/api/admin/projects${buildQueryString(
           params
         )}`
+      )
+    },
+
+    createProject(
+      payload: ProjectCreate
+    ): Promise<ProjectAdminRead> {
+      return adminRequest<ProjectAdminRead>(
+        "/api/admin/projects",
+        {
+          method: "POST",
+          body:
+            JSON.stringify(
+              payload
+            ),
+        }
       )
     },
 
