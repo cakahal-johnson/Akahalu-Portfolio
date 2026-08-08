@@ -1,4 +1,5 @@
 import { AdminSessionGuard } from "@/components/admin/auth/admin-session-guard"
+import { AdminShell } from "@/components/admin/layout/admin-shell"
 
 type ProtectedAdminLayoutProps = Readonly<{
   children: React.ReactNode
@@ -9,7 +10,9 @@ export default function ProtectedAdminLayout({
 }: ProtectedAdminLayoutProps) {
   return (
     <AdminSessionGuard>
-      {children}
+      <AdminShell>
+        {children}
+      </AdminShell>
     </AdminSessionGuard>
   )
 }

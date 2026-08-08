@@ -11,10 +11,10 @@ import {
   useState,
 } from "react"
 
+import { AdminSessionProvider } from "@/components/admin/auth/admin-session-context"
 import {
   ADMIN_LOGIN_PATH,
 } from "@/lib/auth/constants"
-
 import {
   AdminAuthenticationError,
   adminAuthenticationService,
@@ -60,11 +60,14 @@ export function AdminSessionGuard({
           )
         }
       } catch (error) {
+        if (cancelled) {
+          return
+        }
+
         if (
-          !cancelled &&
-          (error instanceof
-            AdminAuthenticationError ||
-            error instanceof Error)
+          error instanceof
+          AdminAuthenticationError ||
+          error instanceof Error
         ) {
           router.replace(
             ADMIN_LOGIN_PATH
@@ -86,14 +89,16 @@ export function AdminSessionGuard({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
           <Loader2
-            className="size-5 animate-spin"
+            className="size-7 animate-spin text-primary"
             aria-hidden="true"
           />
 
-          Loading administration...
+          <p className="text-sm text-muted-foreground">
+            Loading administration...
+          </p>
         </div>
       </div>
     )
@@ -103,5 +108,11 @@ export function AdminSessionGuard({
     return null
   }
 
-  return children
+  return (
+    <AdminSessionProvider
+      user={user}
+    >
+      {children}
+    </AdminSessionProvider>
+  )
 }
