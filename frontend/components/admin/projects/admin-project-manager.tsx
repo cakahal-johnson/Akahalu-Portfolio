@@ -8,7 +8,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import {
-  useCallback,
   useEffect,
   useState,
 } from "react"
@@ -24,13 +23,13 @@ import {
 import { Button } from "@/components/ui/button"
 
 import {
-  publicPortfolioService,
-} from "@/services/portfolio"
-
-import {
   AdminApiError,
   adminProjectService,
 } from "@/services/admin"
+
+import {
+  publicPortfolioService,
+} from "@/services/portfolio"
 
 import type {
   AdminProjectListResponse,
@@ -108,79 +107,104 @@ export function AdminProjectManager() {
         | "featured"
     } | null>(null)
 
-  const loadProjects =
-    useCallback(
-      async () => {
-        try {
-          setLoading(true)
-          setError(null)
+  useEffect(() => {
+    let cancelled =
+      false
 
-          const result =
-            await adminProjectService.getProjects(
-              {
-                page,
-                page_size:
-                  PAGE_SIZE,
+    const request =
+      adminProjectService.getProjects(
+        {
+          page,
+          page_size:
+            PAGE_SIZE,
 
-                search:
-                  filters.search.trim() ||
-                  undefined,
+          search:
+            filters.search.trim() ||
+            undefined,
 
-                category_id:
-                  filters.categoryId ||
-                  undefined,
+          category_id:
+            filters.categoryId ||
+            undefined,
 
-                technology_id:
-                  filters.technologyId ||
-                  undefined,
+          technology_id:
+            filters.technologyId ||
+            undefined,
 
-                project_status:
-                  filters.status ||
-                  undefined,
+          project_status:
+            filters.status ||
+            undefined,
 
-                visibility:
-                  filters.visibility ||
-                  undefined,
+          visibility:
+            filters.visibility ||
+            undefined,
 
-                is_featured:
-                  filters.featured ===
-                  "all"
-                    ? undefined
-                    : filters.featured ===
-                      "true",
+          is_featured:
+            filters.featured ===
+            "all"
+              ? undefined
+              : filters.featured ===
+                "true",
 
-                include_deleted:
-                  filters.includeDeleted,
+          include_deleted:
+            filters.includeDeleted,
 
-                sort_by:
-                  filters.sortBy,
+          sort_by:
+            filters.sortBy,
 
-                sort_direction:
-                  filters.sortDirection,
-              }
-            )
+          sort_direction:
+            filters.sortDirection,
+        }
+      )
 
-          setProjects(result)
-        } catch (caughtError) {
+    void request
+      .then(
+        (result) => {
+          if (cancelled) {
+            return
+          }
+
+          setProjects(
+            result
+          )
+
+          setError(
+            null
+          )
+        }
+      )
+      .catch(
+        (caughtError: unknown) => {
+          if (cancelled) {
+            return
+          }
+
           setError(
             caughtError instanceof
             AdminApiError
               ? caughtError.message
               : "Projects could not be loaded."
           )
-        } finally {
-          setLoading(false)
         }
-      },
-      [
-        filters,
-        page,
-      ]
-    )
+      )
+      .finally(
+        () => {
+          if (cancelled) {
+            return
+          }
 
-  useEffect(() => {
-    void loadProjects()
-  }, [loadProjects])
+          setLoading(
+            false
+          )
+        }
+      )
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    filters,
+    page,
+  ])
 
   useEffect(() => {
     let cancelled =
@@ -228,22 +252,56 @@ export function AdminProjectManager() {
     }
   }, [])
 
+  function beginProjectReload() {
+    setLoading(
+      true
+    )
+
+    setError(
+      null
+    )
+  }
+
   function changeFilters(
     nextFilters: ProjectAdminFilterState
   ) {
+    beginProjectReload()
+
     setFilters(
       nextFilters
     )
 
-    setPage(1)
+    setPage(
+      1
+    )
   }
 
   function resetFilters() {
+    beginProjectReload()
+
     setFilters(
       defaultProjectAdminFilters
     )
 
-    setPage(1)
+    setPage(
+      1
+    )
+  }
+
+  function changePage(
+    nextPage: number
+  ) {
+    if (
+      nextPage === page
+    ) {
+      return
+    }
+
+    beginProjectReload()
+
+    setPage(
+      nextPage
+    )
   }
 
   function replaceProject(
@@ -286,7 +344,9 @@ export function AdminProjectManager() {
           "visibility",
       })
 
-      setError(null)
+      setError(
+        null
+      )
 
       const updated =
         await adminProjectService.updateVisibility(
@@ -335,7 +395,9 @@ export function AdminProjectManager() {
           "featured",
       })
 
-      setError(null)
+      setError(
+        null
+      )
 
       const updated =
         await adminProjectService.updateFeatured(
@@ -504,7 +566,7 @@ export function AdminProjectManager() {
             projects.has_previous_page
           }
           onPageChange={
-            setPage
+            changePage
           }
         />
       ) : null}
