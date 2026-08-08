@@ -12,9 +12,16 @@ export const apiEndpoints = {
     me: "/auth/me",
   },
 
+  account: {
+    register: "/account/register",
+    verifyEmail: "/account/verify-email",
+    resendVerification: "/account/resend-verification",
+    forgotPassword: "/account/forgot-password",
+    resetPassword: "/account/reset-password",
+  },
+
   portfolio: {
     profile: "/portfolio/profile",
-
     categories: "/portfolio/categories",
 
     categoryBySlug: (slug: string) =>
