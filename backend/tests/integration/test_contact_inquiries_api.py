@@ -966,6 +966,143 @@ async def test_statistics_returns_expected_counts(
     }
 
 
+async def test_assignee_options_use_contact_read_permission(
+    client: AsyncClient,
+    admin_contact_records: dict[str, object],
+) -> None:
+    reader = cast(
+        User,
+        admin_contact_records["reader_user"],
+    )
+
+    assigned_user = cast(
+        User,
+        admin_contact_records["assigned_user"],
+    )
+
+    alternate_assignee = cast(
+        User,
+        admin_contact_records["alternate_assignee"],
+    )
+
+    inactive_assignee = cast(
+        User,
+        admin_contact_records["inactive_assignee"],
+    )
+
+    token = await login_user(
+        client,
+        email=reader.email,
+    )
+
+    response = await client.get(
+        f"{ADMIN_CONTACT_URL}/assignees",
+        headers=authorization_headers(
+            token,
+        ),
+    )
+
+    assert response.status_code == 200, response.text
+
+    payload = response.json()
+
+    option_ids = {item["id"] for item in payload}
+
+    assert str(assigned_user.id) in option_ids
+    assert str(alternate_assignee.id) in option_ids
+    assert str(inactive_assignee.id) not in option_ids
+
+    for option in payload:
+        assert set(option) == {
+            "id",
+            "full_name",
+            "email",
+        }
+
+
+async def test_project_options_use_contact_read_permission(
+    client: AsyncClient,
+    admin_contact_records: dict[str, object],
+) -> None:
+    reader = cast(
+        User,
+        admin_contact_records["reader_user"],
+    )
+
+    published_project = cast(
+        Project,
+        admin_contact_records["published_project"],
+    )
+
+    draft_project = cast(
+        Project,
+        admin_contact_records["draft_project"],
+    )
+
+    token = await login_user(
+        client,
+        email=reader.email,
+    )
+
+    response = await client.get(
+        f"{ADMIN_CONTACT_URL}/projects",
+        headers=authorization_headers(
+            token,
+        ),
+    )
+
+    assert response.status_code == 200, response.text
+
+    payload = response.json()
+
+    option_ids = {item["id"] for item in payload}
+
+    assert str(published_project.id) in option_ids
+    assert str(draft_project.id) in option_ids
+
+    for option in payload:
+        assert set(option) == {
+            "id",
+            "title",
+            "slug",
+        }
+
+
+async def test_inquiry_lookup_options_reject_missing_permission(
+    client: AsyncClient,
+    admin_contact_records: dict[str, object],
+) -> None:
+    outsider = cast(
+        User,
+        admin_contact_records["outsider_user"],
+    )
+
+    token = await login_user(
+        client,
+        email=outsider.email,
+    )
+
+    assignee_response = await client.get(
+        f"{ADMIN_CONTACT_URL}/assignees",
+        headers=authorization_headers(
+            token,
+        ),
+    )
+
+    project_response = await client.get(
+        f"{ADMIN_CONTACT_URL}/projects",
+        headers=authorization_headers(
+            token,
+        ),
+    )
+
+    assert assignee_response.status_code == 403
+    assert assignee_response.json()["detail"]["code"] == ("insufficient_permissions")
+
+    assert project_response.status_code == 403
+    assert project_response.json()["detail"]["code"] == ("insufficient_permissions")
+
+
 async def test_get_deleted_inquiry_requires_include_deleted(
     client: AsyncClient,
     admin_contact_records: dict[str, object],

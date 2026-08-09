@@ -12,6 +12,10 @@ export {
 } from "@/services/admin/experience-service"
 
 export {
+  adminInquiryService,
+} from "@/services/admin/inquiry-service"
+
+export {
   adminProfileService,
 } from "@/services/admin/profile-service"
 

@@ -172,13 +172,13 @@ class ContactInquiry(BaseModel, ReprMixin):
     assigned_to: Mapped[User | None] = relationship(
         "User",
         foreign_keys=[assigned_to_id],
-        lazy="joined",
+        lazy="raise",
     )
 
     project: Mapped[Project | None] = relationship(
         "Project",
         foreign_keys=[project_id],
-        lazy="joined",
+        lazy="raise",
     )
 
     __table_args__ = (
@@ -222,7 +222,7 @@ class ContactInquiry(BaseModel, ReprMixin):
             name="contact_inquiries_type_allowed",
         ),
         CheckConstraint(
-            ("status IN ('new', 'in_progress', 'responded', 'closed', 'spam')"),
+            "status IN ('new', 'in_progress', 'responded', 'closed', 'spam')",
             name="contact_inquiries_status_allowed",
         ),
         CheckConstraint(
@@ -238,27 +238,27 @@ class ContactInquiry(BaseModel, ReprMixin):
             name="contact_inquiries_read_state_consistent",
         ),
         CheckConstraint(
-            ("status <> 'responded' OR responded_at IS NOT NULL"),
+            "status <> 'responded' OR responded_at IS NOT NULL",
             name="contact_inquiries_responded_requires_timestamp",
         ),
         CheckConstraint(
-            ("status <> 'closed' OR closed_at IS NOT NULL"),
+            "status <> 'closed' OR closed_at IS NOT NULL",
             name="contact_inquiries_closed_requires_timestamp",
         ),
         CheckConstraint(
-            ("internal_notes IS NULL OR length(btrim(internal_notes)) > 0"),
+            "internal_notes IS NULL OR length(btrim(internal_notes)) > 0",
             name="contact_inquiries_internal_notes_not_blank",
         ),
         CheckConstraint(
-            ("source_page IS NULL OR length(btrim(source_page)) > 0"),
+            "source_page IS NULL OR length(btrim(source_page)) > 0",
             name="contact_inquiries_source_page_not_blank",
         ),
         CheckConstraint(
-            ("user_agent IS NULL OR length(btrim(user_agent)) > 0"),
+            "user_agent IS NULL OR length(btrim(user_agent)) > 0",
             name="contact_inquiries_user_agent_not_blank",
         ),
         CheckConstraint(
-            ("ip_address_hash IS NULL OR length(ip_address_hash) = 64"),
+            "ip_address_hash IS NULL OR length(ip_address_hash) = 64",
             name="contact_inquiries_ip_hash_length",
         ),
         CheckConstraint(
@@ -271,26 +271,34 @@ class ContactInquiry(BaseModel, ReprMixin):
             "priority",
             "is_read",
             "created_at",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text(
+                "deleted_at IS NULL",
+            ),
         ),
         Index(
             "ix_contact_inquiries_assignment_listing",
             "assigned_to_id",
             "status",
             "created_at",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text(
+                "deleted_at IS NULL",
+            ),
         ),
         Index(
             "ix_contact_inquiries_project_listing",
             "project_id",
             "created_at",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text(
+                "deleted_at IS NULL",
+            ),
         ),
         Index(
             "ix_contact_inquiries_sender_listing",
             "email",
             "created_at",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text(
+                "deleted_at IS NULL",
+            ),
         ),
     )
 
@@ -310,6 +318,14 @@ class ContactInquiry(BaseModel, ReprMixin):
     def requires_attention(self) -> bool:
         return (
             not self.is_deleted
-            and self.status in {"new", "in_progress"}
-            and self.priority in {"high", "urgent"}
+            and self.status
+            in {
+                "new",
+                "in_progress",
+            }
+            and self.priority
+            in {
+                "high",
+                "urgent",
+            }
         )

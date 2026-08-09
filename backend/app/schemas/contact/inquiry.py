@@ -333,6 +333,20 @@ class ContactInquiryRestoreRequest(SchemaBase):
         return self
 
 
+class ContactInquiryAssigneeOption(SchemaBase):
+    id: UUID
+
+    full_name: str
+    email: EmailStr
+
+
+class ContactInquiryProjectOption(SchemaBase):
+    id: UUID
+
+    title: str
+    slug: str
+
+
 class ContactInquirySummary(SchemaBase):
     id: UUID
 

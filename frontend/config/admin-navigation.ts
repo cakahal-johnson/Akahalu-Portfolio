@@ -20,50 +20,104 @@ export type AdminNavigationItem = {
 
 export const adminNavigation: AdminNavigationItem[] = [
   {
-    title: "Dashboard",
-    href: "/admin",
-    icon: Gauge,
+    title:
+      "Dashboard",
+
+    href:
+      "/admin",
+
+    icon:
+      Gauge,
   },
   {
-    title: "Profile",
-    href: "/admin/profile",
-    icon: UserRound,
-    permission: "profile.read",
+    title:
+      "Profile",
+
+    href:
+      "/admin/profile",
+
+    icon:
+      UserRound,
+
+    permission:
+      "profile.read",
   },
   {
-    title: "Projects",
-    href: "/admin/projects",
-    icon: FolderKanban,
-    permission: "projects.read",
+    title:
+      "Projects",
+
+    href:
+      "/admin/projects",
+
+    icon:
+      FolderKanban,
+
+    permission:
+      "projects.read",
   },
   {
-    title: "Categories",
-    href: "/admin/categories",
-    icon: Layers3,
-    permission: "projects.read",
+    title:
+      "Categories",
+
+    href:
+      "/admin/categories",
+
+    icon:
+      Layers3,
+
+    permission:
+      "projects.read",
   },
   {
-    title: "Technologies",
-    href: "/admin/technologies",
-    icon: Wrench,
-    permission: "projects.read",
+    title:
+      "Technologies",
+
+    href:
+      "/admin/technologies",
+
+    icon:
+      Wrench,
+
+    permission:
+      "projects.read",
   },
   {
-    title: "Experience",
-    href: "/admin/experience",
-    icon: BriefcaseBusiness,
-    permission: "experience.read",
+    title:
+      "Experience",
+
+    href:
+      "/admin/experience",
+
+    icon:
+      BriefcaseBusiness,
+
+    permission:
+      "experience.read",
   },
   {
-    title: "Inquiries",
-    href: "/admin/inquiries",
-    icon: Mail,
-    permission: "messages.read",
+    title:
+      "Inquiries",
+
+    href:
+      "/admin/inquiries",
+
+    icon:
+      Mail,
+
+    permission:
+      "contact_inquiries.read",
   },
   {
-    title: "Users",
-    href: "/admin/users",
-    icon: Users,
-    permission: "users.read",
+    title:
+      "Users",
+
+    href:
+      "/admin/users",
+
+    icon:
+      Users,
+
+    permission:
+      "users.read",
   },
 ]

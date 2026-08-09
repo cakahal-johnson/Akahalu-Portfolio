@@ -5,11 +5,12 @@ import hmac
 from collections.abc import Sequence
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from app.core.config import settings
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
 
+from app.core.config import settings
 from app.models.contact_inquiry import ContactInquiry
 from app.models.project import Project
 from app.models.user import User
@@ -179,6 +180,61 @@ class ContactInquiryService:
             sort_by=sort_by,
             sort_direction=sort_direction,
         )
+
+    async def list_assignee_options(
+        self,
+        session: AsyncSession,
+    ) -> Sequence[User]:
+        statement = (
+            select(
+                User,
+            )
+            .options(
+                raiseload("*"),
+            )
+            .where(
+                User.deleted_at.is_(None),
+                User.is_active.is_(True),
+            )
+            .order_by(
+                User.first_name.asc(),
+                User.last_name.asc(),
+                User.email.asc(),
+                User.id.asc(),
+            )
+        )
+
+        result = await session.execute(
+            statement,
+        )
+
+        return result.scalars().all()
+
+    async def list_project_options(
+        self,
+        session: AsyncSession,
+    ) -> Sequence[Project]:
+        statement = (
+            select(
+                Project,
+            )
+            .options(
+                raiseload("*"),
+            )
+            .where(
+                Project.deleted_at.is_(None),
+            )
+            .order_by(
+                Project.title.asc(),
+                Project.id.asc(),
+            )
+        )
+
+        result = await session.execute(
+            statement,
+        )
+
+        return result.scalars().all()
 
     async def create_public(
         self,
@@ -536,20 +592,30 @@ class ContactInquiryService:
         project_id: UUID,
     ) -> Project:
         """
-        Return a publicly accessible portfolio project.
+        Return an available public portfolio project.
 
-        Contact inquiries may reference only projects that are published,
-        publicly visible, not soft-deleted, and have a publication timestamp.
+        Public contact submissions may reference only projects that are
+        published, publicly visible, not soft-deleted, and have a
+        publication timestamp.
+
+        Relationship loading is blocked because this validation needs
+        Project column values only.
         """
 
-        statement = select(
-            Project,
-        ).where(
-            Project.id == project_id,
-            Project.deleted_at.is_(None),
-            Project.status == "published",
-            Project.visibility == "public",
-            Project.published_at.is_not(None),
+        statement = (
+            select(
+                Project,
+            )
+            .options(
+                raiseload("*"),
+            )
+            .where(
+                Project.id == project_id,
+                Project.deleted_at.is_(None),
+                Project.status == "published",
+                Project.visibility == "public",
+                Project.published_at.is_not(None),
+            )
         )
 
         result = await session.execute(
@@ -570,11 +636,24 @@ class ContactInquiryService:
         session: AsyncSession,
         user_id: UUID,
     ) -> User:
-        statement = select(
-            User,
-        ).where(
-            User.id == user_id,
-            User.deleted_at.is_(None),
+        """
+        Return an active, non-deleted inquiry assignee.
+
+        Relationship loading is blocked because assignment validation
+        requires User column values only.
+        """
+
+        statement = (
+            select(
+                User,
+            )
+            .options(
+                raiseload("*"),
+            )
+            .where(
+                User.id == user_id,
+                User.deleted_at.is_(None),
+            )
         )
 
         result = await session.execute(

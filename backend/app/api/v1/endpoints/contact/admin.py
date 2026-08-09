@@ -23,7 +23,9 @@ from app.schemas.contact.common import (
 from app.schemas.contact.inquiry import (
     AdminContactInquiryListResponse,
     ContactInquiryAdminRead,
+    ContactInquiryAssigneeOption,
     ContactInquiryDeleteRequest,
+    ContactInquiryProjectOption,
     ContactInquiryReadUpdate,
     ContactInquiryRestoreRequest,
     ContactInquiryStatusUpdate,
@@ -370,6 +372,64 @@ async def list_admin_contact_inquiries(
         has_next_page=page < total_pages,
         has_previous_page=page > 1,
     )
+
+
+@router.get(
+    "/assignees",
+    response_model=list[ContactInquiryAssigneeOption],
+    status_code=status.HTTP_200_OK,
+    summary="List contact inquiry assignee options",
+)
+async def list_contact_inquiry_assignees(
+    _: ContactInquiryReader,
+    database_session: DatabaseSession,
+) -> list[ContactInquiryAssigneeOption]:
+    """
+    Return active users that may be assigned to contact inquiries.
+
+    This endpoint deliberately uses the contact-inquiry permission
+    boundary instead of requiring full user-management access.
+    """
+
+    users = await contact_inquiry_service.list_assignee_options(
+        database_session,
+    )
+
+    return [
+        ContactInquiryAssigneeOption.model_validate(
+            user,
+        )
+        for user in users
+    ]
+
+
+@router.get(
+    "/projects",
+    response_model=list[ContactInquiryProjectOption],
+    status_code=status.HTTP_200_OK,
+    summary="List contact inquiry project options",
+)
+async def list_contact_inquiry_projects(
+    _: ContactInquiryReader,
+    database_session: DatabaseSession,
+) -> list[ContactInquiryProjectOption]:
+    """
+    Return lightweight portfolio project references for inquiry display.
+
+    This endpoint avoids requiring general project-administration
+    permissions merely to understand an inquiry's related project.
+    """
+
+    projects = await contact_inquiry_service.list_project_options(
+        database_session,
+    )
+
+    return [
+        ContactInquiryProjectOption.model_validate(
+            project,
+        )
+        for project in projects
+    ]
 
 
 @router.get(
