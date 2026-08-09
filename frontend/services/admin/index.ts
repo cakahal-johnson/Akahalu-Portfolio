@@ -8,6 +8,10 @@ export {
 } from "@/services/admin/category-service"
 
 export {
+  adminExperienceService,
+} from "@/services/admin/experience-service"
+
+export {
   adminProfileService,
 } from "@/services/admin/profile-service"
 

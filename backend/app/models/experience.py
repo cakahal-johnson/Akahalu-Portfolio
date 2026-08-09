@@ -164,13 +164,13 @@ class Experience(BaseModel, ReprMixin):
     created_by: Mapped[User | None] = relationship(
         "User",
         foreign_keys=[created_by_id],
-        lazy="joined",
+        lazy="raise",
     )
 
     updated_by: Mapped[User | None] = relationship(
         "User",
         foreign_keys=[updated_by_id],
-        lazy="joined",
+        lazy="raise",
     )
 
     __table_args__ = (
