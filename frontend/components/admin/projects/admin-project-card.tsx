@@ -10,15 +10,21 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import {
+  Button,
+} from "@/components/ui/button"
+
+import {
+  cn,
+} from "@/lib/utils"
 
 import type {
   ProjectAdminRead,
 } from "@/types/portfolio/project"
 
 type AdminProjectCardProps = {
-  project: ProjectAdminRead
+  project:
+    ProjectAdminRead
 
   busyAction:
     | "visibility"
@@ -26,25 +32,30 @@ type AdminProjectCardProps = {
     | null
 
   onToggleVisibility: (
-    project: ProjectAdminRead
+    project:
+      ProjectAdminRead
   ) => void
 
   onToggleFeatured: (
-    project: ProjectAdminRead
+    project:
+      ProjectAdminRead
   ) => void
 }
 
 function statusClass(
-  status: string
+  status:
+    string
 ): string {
   if (
-    status === "published"
+    status ===
+    "published"
   ) {
     return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
   }
 
   if (
-    status === "archived"
+    status ===
+    "archived"
   ) {
     return "bg-muted text-muted-foreground"
   }
@@ -207,6 +218,19 @@ export function AdminProjectCard({
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2">
+          <Button
+            asChild
+            size="sm"
+          >
+            <Link
+              href={`/admin/projects/${encodeURIComponent(
+                project.id
+              )}`}
+            >
+              Manage
+            </Link>
+          </Button>
+
           <Button
             type="button"
             variant="outline"

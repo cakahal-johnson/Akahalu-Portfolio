@@ -21,12 +21,48 @@ function invalidJsonResponse(): NextResponse {
           "invalid_request_body",
 
         message:
-          "The project featured request body must contain valid JSON.",
+          "The project request body must contain valid JSON.",
       },
     },
     {
       status: 400,
     }
+  )
+}
+
+function backendProjectPath(
+  projectId: string
+): string {
+  return `/admin/portfolio/projects/${encodeURIComponent(
+    projectId
+  )}`
+}
+
+export async function GET(
+  request: NextRequest,
+  context: RouteContext
+) {
+  const {
+    projectId,
+  } =
+    await context.params
+
+  const query =
+    request.nextUrl.searchParams.toString()
+
+  const projectPath =
+    backendProjectPath(
+      projectId
+    )
+
+  const backendPath =
+    query
+      ? `${projectPath}?${query}`
+      : projectPath
+
+  return proxyAuthenticatedAdminRequest(
+    request,
+    backendPath
   )
 }
 
@@ -50,9 +86,9 @@ export async function PATCH(
 
   return proxyAuthenticatedAdminRequest(
     request,
-    `/admin/portfolio/projects/${encodeURIComponent(
+    backendProjectPath(
       projectId
-    )}/featured`,
+    ),
     {
       method:
         "PATCH",

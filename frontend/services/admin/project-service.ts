@@ -8,6 +8,8 @@ import type {
   ProjectAdminRead,
   ProjectCreate,
   ProjectFeaturedUpdate,
+  ProjectStatusUpdate,
+  ProjectUpdate,
   ProjectVisibilityUpdate,
 } from "@/types/portfolio/project"
 
@@ -96,6 +98,14 @@ function buildQueryString(
     : ""
 }
 
+function projectPath(
+  projectId: string
+): string {
+  return `/api/admin/projects/${encodeURIComponent(
+    projectId
+  )}`
+}
+
 export const adminProjectService =
   {
     getProjects(
@@ -105,6 +115,34 @@ export const adminProjectService =
         `/api/admin/projects${buildQueryString(
           params
         )}`
+      )
+    },
+
+    getProject(
+      projectId: string,
+      {
+        includeDeleted = false,
+      }: {
+        includeDeleted?: boolean
+      } = {}
+    ): Promise<ProjectAdminRead> {
+      const searchParams =
+        new URLSearchParams()
+
+      if (includeDeleted) {
+        searchParams.set(
+          "include_deleted",
+          "true"
+        )
+      }
+
+      const query =
+        searchParams.toString()
+
+      return adminRequest<ProjectAdminRead>(
+        `${projectPath(
+          projectId
+        )}${query ? `?${query}` : ""}`
       )
     },
 
@@ -123,16 +161,55 @@ export const adminProjectService =
       )
     },
 
+    updateProject(
+      projectId: string,
+      payload: ProjectUpdate
+    ): Promise<ProjectAdminRead> {
+      return adminRequest<ProjectAdminRead>(
+        projectPath(
+          projectId
+        ),
+        {
+          method: "PATCH",
+
+          body:
+            JSON.stringify(
+              payload
+            ),
+        }
+      )
+    },
+
+    updateStatus(
+      projectId: string,
+      payload: ProjectStatusUpdate
+    ): Promise<ProjectAdminRead> {
+      return adminRequest<ProjectAdminRead>(
+        `${projectPath(
+          projectId
+        )}/status`,
+        {
+          method: "PATCH",
+
+          body:
+            JSON.stringify(
+              payload
+            ),
+        }
+      )
+    },
+
     updateVisibility(
       projectId: string,
       payload: ProjectVisibilityUpdate
     ): Promise<ProjectAdminRead> {
       return adminRequest<ProjectAdminRead>(
-        `/api/admin/projects/${encodeURIComponent(
+        `${projectPath(
           projectId
         )}/visibility`,
         {
           method: "PATCH",
+
           body:
             JSON.stringify(
               payload
@@ -146,11 +223,12 @@ export const adminProjectService =
       payload: ProjectFeaturedUpdate
     ): Promise<ProjectAdminRead> {
       return adminRequest<ProjectAdminRead>(
-        `/api/admin/projects/${encodeURIComponent(
+        `${projectPath(
           projectId
         )}/featured`,
         {
           method: "PATCH",
+
           body:
             JSON.stringify(
               payload

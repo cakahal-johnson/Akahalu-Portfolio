@@ -1,5 +1,6 @@
 import {
   NextRequest,
+  NextResponse,
 } from "next/server"
 
 import {
@@ -12,13 +13,31 @@ type RouteContext = {
   }>
 }
 
+function invalidJsonResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      detail: {
+        code:
+          "invalid_request_body",
+
+        message:
+          "The project visibility request body must contain valid JSON.",
+      },
+    },
+    {
+      status: 400,
+    }
+  )
+}
+
 export async function PATCH(
   request: NextRequest,
   context: RouteContext
 ) {
   const {
     projectId,
-  } = await context.params
+  } =
+    await context.params
 
   let body: unknown
 
@@ -26,7 +45,7 @@ export async function PATCH(
     body =
       await request.json()
   } catch {
-    body = {}
+    return invalidJsonResponse()
   }
 
   return proxyAuthenticatedAdminRequest(
@@ -35,7 +54,9 @@ export async function PATCH(
       projectId
     )}/visibility`,
     {
-      method: "PATCH",
+      method:
+        "PATCH",
+
       body,
     }
   )

@@ -67,6 +67,42 @@ export type ProjectCreate = {
     ProjectTechnologyAssignmentCreate[]
 }
 
+export type ProjectUpdate = {
+  title?: string
+  slug?: string
+
+  short_description?: string
+  description?: string
+
+  problem_statement?: string | null
+  solution_summary?: string | null
+  key_features?: string | null
+  technical_highlights?: string | null
+
+  category_id?: string | null
+
+  status?: ProjectStatus
+  visibility?: ProjectVisibility
+
+  is_featured?: boolean
+  sort_order?: number
+
+  repository_url?: string | null
+  live_url?: string | null
+  case_study_url?: string | null
+  thumbnail_url?: string | null
+
+  started_at?: string | null
+  completed_at?: string | null
+  published_at?: string | null
+
+  seo_title?: string | null
+  seo_description?: string | null
+
+  technology_assignments?:
+    ProjectTechnologyAssignmentCreate[]
+}
+
 export type ProjectSummary = {
   id: string
 

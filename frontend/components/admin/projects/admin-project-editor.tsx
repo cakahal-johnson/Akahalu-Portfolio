@@ -13,11 +13,10 @@ import {
   useState,
   type FormEvent,
 } from "react"
-import {
-  useRouter,
-} from "next/navigation"
 
-import { Button } from "@/components/ui/button"
+import {
+  Button,
+} from "@/components/ui/button"
 
 import {
   AdminApiError,
@@ -34,8 +33,19 @@ import type {
 } from "@/types/portfolio"
 
 import type {
-  ProjectCreate,
+  ProjectAdminRead,
+  ProjectUpdate,
 } from "@/types/portfolio/project"
+
+type AdminProjectEditorProps = {
+  project:
+    ProjectAdminRead
+
+  onProjectChange: (
+    project:
+      ProjectAdminRead
+  ) => void
+}
 
 type ProjectFormState = {
   title: string
@@ -65,36 +75,9 @@ type ProjectFormState = {
   seoDescription: string
 }
 
-const emptyForm: ProjectFormState = {
-  title: "",
-  slug: "",
-
-  shortDescription: "",
-  description: "",
-
-  problemStatement: "",
-  solutionSummary: "",
-  keyFeatures: "",
-  technicalHighlights: "",
-
-  categoryId: "",
-
-  repositoryUrl: "",
-  liveUrl: "",
-  caseStudyUrl: "",
-  thumbnailUrl: "",
-
-  startedAt: "",
-  completedAt: "",
-
-  sortOrder: "0",
-
-  seoTitle: "",
-  seoDescription: "",
-}
-
 function nullable(
-  value: string
+  value:
+    string
 ): string | null {
   const normalized =
     value.trim()
@@ -105,7 +88,8 @@ function nullable(
 }
 
 function slugify(
-  value: string
+  value:
+    string
 ): string {
   return value
     .trim()
@@ -120,15 +104,58 @@ function slugify(
     )
 }
 
-function dateTimeToIso(
-  value: string
+function isoToLocalDateTime(
+  value:
+    string | null
+): string {
+  if (
+    !value
+  ) {
+    return ""
+  }
+
+  const date =
+    new Date(
+      value
+    )
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return ""
+  }
+
+  const localDate =
+    new Date(
+      date.getTime() -
+        date.getTimezoneOffset() *
+          60_000
+    )
+
+  return localDate
+    .toISOString()
+    .slice(
+      0,
+      16
+    )
+}
+
+function localDateTimeToIso(
+  value:
+    string
 ): string | null {
-  if (!value.trim()) {
+  if (
+    !value.trim()
+  ) {
     return null
   }
 
   const date =
-    new Date(value)
+    new Date(
+      value
+    )
 
   if (
     Number.isNaN(
@@ -141,11 +168,91 @@ function dateTimeToIso(
   return date.toISOString()
 }
 
+function projectToForm(
+  project:
+    ProjectAdminRead
+): ProjectFormState {
+  return {
+    title:
+      project.title,
+
+    slug:
+      project.slug,
+
+    shortDescription:
+      project.short_description,
+
+    description:
+      project.description,
+
+    problemStatement:
+      project.problem_statement ??
+      "",
+
+    solutionSummary:
+      project.solution_summary ??
+      "",
+
+    keyFeatures:
+      project.key_features ??
+      "",
+
+    technicalHighlights:
+      project.technical_highlights ??
+      "",
+
+    categoryId:
+      project.category_id ??
+      "",
+
+    repositoryUrl:
+      project.repository_url ??
+      "",
+
+    liveUrl:
+      project.live_url ??
+      "",
+
+    caseStudyUrl:
+      project.case_study_url ??
+      "",
+
+    thumbnailUrl:
+      project.thumbnail_url ??
+      "",
+
+    startedAt:
+      isoToLocalDateTime(
+        project.started_at
+      ),
+
+    completedAt:
+      isoToLocalDateTime(
+        project.completed_at
+      ),
+
+    sortOrder:
+      String(
+        project.sort_order
+      ),
+
+    seoTitle:
+      project.seo_title ??
+      "",
+
+    seoDescription:
+      project.seo_description ??
+      "",
+  }
+}
+
 type TextFieldProps = {
   label: string
   value: string
+
   onChange: (
-    value: string
+    value:
+      string
   ) => void
 
   type?: string
@@ -158,8 +265,9 @@ type TextFieldProps = {
   step?: number
 
   placeholder?: string
-
   helperText?: string
+
+  disabled?: boolean
 }
 
 function TextField({
@@ -174,6 +282,7 @@ function TextField({
   step,
   placeholder,
   helperText,
+  disabled = false,
 }: TextFieldProps) {
   return (
     <label className="block">
@@ -183,19 +292,36 @@ function TextField({
 
       <input
         type={type}
-        value={value}
+        value={
+          value
+        }
         onChange={(event) =>
           onChange(
             event.target.value
           )
         }
-        required={required}
-        minLength={minLength}
-        maxLength={maxLength}
-        min={min}
-        step={step}
-        placeholder={placeholder}
-        className="mt-2 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        required={
+          required
+        }
+        minLength={
+          minLength
+        }
+        maxLength={
+          maxLength
+        }
+        min={
+          min
+        }
+        step={
+          step
+        }
+        placeholder={
+          placeholder
+        }
+        disabled={
+          disabled
+        }
+        className="mt-2 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
       />
 
       {helperText ? (
@@ -210,8 +336,10 @@ function TextField({
 type TextAreaFieldProps = {
   label: string
   value: string
+
   onChange: (
-    value: string
+    value:
+      string
   ) => void
 
   required?: boolean
@@ -220,8 +348,9 @@ type TextAreaFieldProps = {
   maxLength?: number
 
   rows?: number
-
   helperText?: string
+
+  disabled?: boolean
 }
 
 function TextAreaField({
@@ -233,6 +362,7 @@ function TextAreaField({
   maxLength,
   rows = 6,
   helperText,
+  disabled = false,
 }: TextAreaFieldProps) {
   return (
     <label className="block">
@@ -241,17 +371,30 @@ function TextAreaField({
       </span>
 
       <textarea
-        value={value}
+        value={
+          value
+        }
         onChange={(event) =>
           onChange(
             event.target.value
           )
         }
-        required={required}
-        minLength={minLength}
-        maxLength={maxLength}
-        rows={rows}
-        className="mt-2 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm leading-6 outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        required={
+          required
+        }
+        minLength={
+          minLength
+        }
+        maxLength={
+          maxLength
+        }
+        rows={
+          rows
+        }
+        disabled={
+          disabled
+        }
+        className="mt-2 w-full resize-y rounded-lg border border-input bg-background p-3 text-sm leading-6 outline-none transition-shadow focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
       />
 
       <div className="mt-1.5 flex justify-between gap-4 text-xs text-muted-foreground">
@@ -265,7 +408,8 @@ function TextAreaField({
 
         {maxLength ? (
           <span className="shrink-0">
-            {value.length}/{maxLength}
+            {value.length}/
+            {maxLength}
           </span>
         ) : null}
       </div>
@@ -273,16 +417,19 @@ function TextAreaField({
   )
 }
 
-export function AdminProjectCreateForm() {
-  const router =
-    useRouter()
-
+export function AdminProjectEditor({
+  project,
+  onProjectChange,
+}: AdminProjectEditorProps) {
   const [
     form,
     setForm,
   ] =
     useState<ProjectFormState>(
-      emptyForm
+      () =>
+        projectToForm(
+          project
+        )
     )
 
   const [
@@ -306,7 +453,15 @@ export function AdminProjectCreateForm() {
     setSelectedTechnologyIds,
   ] =
     useState<string[]>(
-      []
+      () =>
+        project.technology_assignments.map(
+          (
+            assignment
+          ) =>
+            assignment
+              .technology
+              .id
+        )
     )
 
   const [
@@ -314,12 +469,6 @@ export function AdminProjectCreateForm() {
     setTechnologySearch,
   ] =
     useState("")
-
-  const [
-    slugEdited,
-    setSlugEdited,
-  ] =
-    useState(false)
 
   const [
     optionsLoading,
@@ -349,6 +498,19 @@ export function AdminProjectCreateForm() {
       null
     )
 
+  const [
+    success,
+    setSuccess,
+  ] =
+    useState<string | null>(
+      null
+    )
+
+  const deleted =
+    project.deleted_at !==
+    null
+
+
   useEffect(() => {
     let cancelled =
       false
@@ -365,7 +527,9 @@ export function AdminProjectCreateForm() {
           ]
         )
 
-      if (cancelled) {
+      if (
+        cancelled
+      ) {
         return
       }
 
@@ -394,7 +558,7 @@ export function AdminProjectCreateForm() {
           "rejected"
       ) {
         setOptionsError(
-          "Some project classification options could not be loaded. You can still create the project and assign them later."
+          "Some project classification options could not be loaded."
         )
       }
 
@@ -406,7 +570,8 @@ export function AdminProjectCreateForm() {
     void loadOptions()
 
     return () => {
-      cancelled = true
+      cancelled =
+        true
     }
   }, [])
 
@@ -418,12 +583,16 @@ export function AdminProjectCreateForm() {
             .trim()
             .toLowerCase()
 
-        if (!search) {
+        if (
+          !search
+        ) {
           return technologies
         }
 
         return technologies.filter(
-          (technology) =>
+          (
+            technology
+          ) =>
             technology.name
               .toLowerCase()
               .includes(
@@ -445,11 +614,15 @@ export function AdminProjectCreateForm() {
   function updateField<
     TKey extends keyof ProjectFormState,
   >(
-    key: TKey,
-    value: ProjectFormState[TKey]
+    key:
+      TKey,
+    value:
+      ProjectFormState[TKey]
   ) {
     setForm(
-      (current) => ({
+      (
+        current
+      ) => ({
         ...current,
         [key]:
           value,
@@ -459,67 +632,41 @@ export function AdminProjectCreateForm() {
     setError(
       null
     )
-  }
 
-  function updateTitle(
-    value: string
-  ) {
-    setForm(
-      (current) => ({
-        ...current,
-
-        title:
-          value,
-
-        slug:
-          slugEdited
-            ? current.slug
-            : slugify(
-                value
-              ),
-      })
-    )
-
-    setError(
+    setSuccess(
       null
     )
   }
 
   function updateSlug(
-    value: string
+    value:
+      string
   ) {
-    setSlugEdited(
-      true
-    )
-
-    setForm(
-      (current) => ({
-        ...current,
-
-        slug:
-          slugify(
-            value
-          ),
-      })
-    )
-
-    setError(
-      null
+    updateField(
+      "slug",
+      slugify(
+        value
+      )
     )
   }
 
   function toggleTechnology(
-    technologyId: string
+    technologyId:
+      string
   ) {
     setSelectedTechnologyIds(
-      (current) => {
+      (
+        current
+      ) => {
         if (
           current.includes(
             technologyId
           )
         ) {
           return current.filter(
-            (id) =>
+            (
+              id
+            ) =>
               id !==
               technologyId
           )
@@ -535,10 +682,14 @@ export function AdminProjectCreateForm() {
     setError(
       null
     )
+
+    setSuccess(
+      null
+    )
   }
 
   function buildPayload():
-    | ProjectCreate
+    | ProjectUpdate
     | null {
     const title =
       form.title.trim()
@@ -555,7 +706,8 @@ export function AdminProjectCreateForm() {
       form.description.trim()
 
     if (
-      title.length < 2
+      title.length <
+      2
     ) {
       setError(
         "Project title must contain at least 2 characters."
@@ -564,7 +716,9 @@ export function AdminProjectCreateForm() {
       return null
     }
 
-    if (!slug) {
+    if (
+      !slug
+    ) {
       setError(
         "A project slug is required."
       )
@@ -603,7 +757,8 @@ export function AdminProjectCreateForm() {
       !Number.isInteger(
         sortOrder
       ) ||
-      sortOrder < 0
+      sortOrder <
+        0
     ) {
       setError(
         "Sort order must be a whole number of 0 or greater."
@@ -613,12 +768,12 @@ export function AdminProjectCreateForm() {
     }
 
     const startedAt =
-      dateTimeToIso(
+      localDateTimeToIso(
         form.startedAt
       )
 
     const completedAt =
-      dateTimeToIso(
+      localDateTimeToIso(
         form.completedAt
       )
 
@@ -694,15 +849,6 @@ export function AdminProjectCreateForm() {
         form.categoryId ||
         null,
 
-      status:
-        "draft",
-
-      visibility:
-        "private",
-
-      is_featured:
-        false,
-
       sort_order:
         sortOrder,
 
@@ -732,9 +878,6 @@ export function AdminProjectCreateForm() {
       completed_at:
         completedAt,
 
-      published_at:
-        null,
-
       seo_title:
         nullable(
           form.seoTitle
@@ -750,33 +893,54 @@ export function AdminProjectCreateForm() {
           (
             technologyId,
             index
-          ) => ({
-            technology_id:
-              technologyId,
+          ) => {
+            const existing =
+              project.technology_assignments.find(
+                (
+                  assignment
+                ) =>
+                  assignment
+                    .technology
+                    .id ===
+                  technologyId
+              )
 
-            is_featured:
-              false,
+            return {
+              technology_id:
+                technologyId,
 
-            sort_order:
-              index,
-          })
+              is_featured:
+                existing
+                  ?.is_featured ??
+                false,
+
+              sort_order:
+                index,
+            }
+          }
         ),
     }
   }
 
-  async function createProject(
-    event: FormEvent<HTMLFormElement>
+  async function saveProject(
+    event:
+      FormEvent<HTMLFormElement>
   ) {
     event.preventDefault()
 
-    if (saving) {
+    if (
+      saving ||
+      deleted
+    ) {
       return
     }
 
     const payload =
       buildPayload()
 
-    if (!payload) {
+    if (
+      !payload
+    ) {
       return
     }
 
@@ -789,24 +953,56 @@ export function AdminProjectCreateForm() {
         null
       )
 
-            const created =
-        await adminProjectService.createProject(
+      setSuccess(
+        null
+      )
+
+                 const updated =
+        await adminProjectService.updateProject(
+          project.id,
           payload
         )
 
-      router.push(
-        `/admin/projects/${encodeURIComponent(
-          created.id
-        )}`
+      /*
+       * Apply the canonical values returned
+       * by FastAPI only after a successful
+       * content save.
+       *
+       * Lifecycle-only parent updates must
+       * not reset unsaved editor state.
+       */
+      setForm(
+        projectToForm(
+          updated
+        )
       )
 
-      router.refresh()
-    } catch (caughtError) {
+      setSelectedTechnologyIds(
+        updated.technology_assignments.map(
+          (
+            assignment
+          ) =>
+            assignment
+              .technology
+              .id
+        )
+      )
+
+      onProjectChange(
+        updated
+      )
+
+      setSuccess(
+        "Project changes saved successfully."
+      )
+    } catch (
+      caughtError
+    ) {
       setError(
         caughtError instanceof
         AdminApiError
           ? caughtError.message
-          : "The project could not be created."
+          : "The project could not be updated."
       )
     } finally {
       setSaving(
@@ -818,24 +1014,17 @@ export function AdminProjectCreateForm() {
   return (
     <form
       onSubmit={
-        createProject
+        saveProject
       }
       className="space-y-6"
     >
-      <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6">
-        <h2 className="font-semibold">
-          Draft project
-        </h2>
-
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          New projects are created as
-          private drafts. Publishing,
-          visibility, featured state,
-          links and media can be managed
-          through the dedicated project
-          management steps afterward.
-        </p>
-      </section>
+      {deleted ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          This project is deleted.
+          Restore it before editing
+          project content.
+        </div>
+      ) : null}
 
       {error ? (
         <div
@@ -851,11 +1040,22 @@ export function AdminProjectCreateForm() {
         </div>
       ) : null}
 
-      {optionsError ? (
+      {success ? (
         <div
           role="status"
-          className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm"
+          className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm"
         >
+          <Check
+            className="mt-0.5 size-4 shrink-0"
+            aria-hidden="true"
+          />
+
+          {success}
+        </div>
+      ) : null}
+
+      {optionsError ? (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
           <AlertCircle
             className="mt-0.5 size-4 shrink-0"
             aria-hidden="true"
@@ -866,16 +1066,14 @@ export function AdminProjectCreateForm() {
       ) : null}
 
       <section className="rounded-2xl border border-border bg-background p-5 sm:p-6">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Project identity
-          </h2>
+        <h2 className="text-lg font-semibold">
+          Project identity
+        </h2>
 
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Define the project name,
-            permanent URL slug and summary.
-          </p>
-        </div>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          Edit the project title, URL slug
+          and portfolio description.
+        </p>
 
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <TextField
@@ -883,13 +1081,18 @@ export function AdminProjectCreateForm() {
             value={
               form.title
             }
-            onChange={
-              updateTitle
+            onChange={(value) =>
+              updateField(
+                "title",
+                value
+              )
             }
             required
             minLength={2}
             maxLength={200}
-            placeholder="Akahalu Portfolio"
+            disabled={
+              deleted
+            }
           />
 
           <TextField
@@ -901,8 +1104,9 @@ export function AdminProjectCreateForm() {
               updateSlug
             }
             required
-            placeholder="akahalu-portfolio"
-            helperText="Generated from the title until you edit it manually."
+            disabled={
+              deleted
+            }
           />
         </div>
 
@@ -922,7 +1126,9 @@ export function AdminProjectCreateForm() {
             minLength={10}
             maxLength={500}
             rows={4}
-            helperText="Used in project cards, summaries and portfolio listings."
+            disabled={
+              deleted
+            }
           />
         </div>
 
@@ -942,23 +1148,17 @@ export function AdminProjectCreateForm() {
             minLength={20}
             maxLength={50000}
             rows={10}
-            helperText="Describe the project, its scope, implementation and outcome."
+            disabled={
+              deleted
+            }
           />
         </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-background p-5 sm:p-6">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Case study
-          </h2>
-
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Capture the problem, solution,
-            important functionality and
-            technical decisions.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold">
+          Case study
+        </h2>
 
         <div className="mt-5 grid gap-5 xl:grid-cols-2">
           <TextAreaField
@@ -974,6 +1174,9 @@ export function AdminProjectCreateForm() {
             }
             maxLength={20000}
             rows={7}
+            disabled={
+              deleted
+            }
           />
 
           <TextAreaField
@@ -989,6 +1192,9 @@ export function AdminProjectCreateForm() {
             }
             maxLength={20000}
             rows={7}
+            disabled={
+              deleted
+            }
           />
 
           <TextAreaField
@@ -1004,6 +1210,9 @@ export function AdminProjectCreateForm() {
             }
             maxLength={30000}
             rows={7}
+            disabled={
+              deleted
+            }
           />
 
           <TextAreaField
@@ -1019,34 +1228,30 @@ export function AdminProjectCreateForm() {
             }
             maxLength={30000}
             rows={7}
+            disabled={
+              deleted
+            }
           />
         </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-background p-5 sm:p-6">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Classification
-          </h2>
+        <h2 className="text-lg font-semibold">
+          Classification
+        </h2>
 
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Assign an optional project
-            category and the technologies
-            used to build it.
-          </p>
-        </div>
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
+          Manage the category and
+          technologies assigned to this
+          project.
+        </p>
 
         {optionsLoading ? (
           <div className="mt-5 flex min-h-32 items-center justify-center rounded-xl border border-border">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <Loader2
-                className="size-4 animate-spin"
-                aria-hidden="true"
-              />
-
-              Loading categories and
-              technologies...
-            </div>
+            <Loader2
+              className="size-5 animate-spin text-muted-foreground"
+              aria-hidden="true"
+            />
           </div>
         ) : (
           <>
@@ -1059,20 +1264,25 @@ export function AdminProjectCreateForm() {
                 value={
                   form.categoryId
                 }
+                disabled={
+                  deleted
+                }
                 onChange={(event) =>
                   updateField(
                     "categoryId",
                     event.target.value
                   )
                 }
-                className="mt-2 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="mt-2 h-11 w-full rounded-lg border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">
-                  No category yet
+                  No category
                 </option>
 
                 {categories.map(
-                  (category) => (
+                  (
+                    category
+                  ) => (
                     <option
                       key={
                         category.id
@@ -1081,16 +1291,17 @@ export function AdminProjectCreateForm() {
                         category.id
                       }
                     >
-                      {category.name}
+                      {
+                        category.name
+                      }
                     </option>
                   )
                 )}
               </select>
 
               <p className="mt-1.5 text-xs text-muted-foreground">
-                A category becomes
-                mandatory before the
-                project can be published.
+                A category is required
+                before publishing.
               </p>
             </label>
 
@@ -1123,13 +1334,16 @@ export function AdminProjectCreateForm() {
                     value={
                       technologySearch
                     }
+                    disabled={
+                      deleted
+                    }
                     onChange={(event) =>
                       setTechnologySearch(
                         event.target.value
                       )
                     }
                     placeholder="Search technologies"
-                    className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </label>
               </div>
@@ -1139,7 +1353,9 @@ export function AdminProjectCreateForm() {
                 0 ? (
                   <div className="grid gap-px bg-border sm:grid-cols-2 xl:grid-cols-3">
                     {filteredTechnologies.map(
-                      (technology) => {
+                      (
+                        technology
+                      ) => {
                         const selected =
                           selectedTechnologyIds.includes(
                             technology.id
@@ -1151,15 +1367,18 @@ export function AdminProjectCreateForm() {
                               technology.id
                             }
                             type="button"
+                            disabled={
+                              deleted
+                            }
                             onClick={() =>
                               toggleTechnology(
                                 technology.id
                               )
                             }
-                            className="flex min-h-20 items-start gap-3 bg-background p-4 text-left transition-colors hover:bg-muted/50"
                             aria-pressed={
                               selected
                             }
+                            className="flex min-h-20 items-start gap-3 bg-background p-4 text-left transition-colors hover:bg-muted/50 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             <span
                               className={
@@ -1207,18 +1426,9 @@ export function AdminProjectCreateForm() {
       </section>
 
       <section className="rounded-2xl border border-border bg-background p-5 sm:p-6">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Links & media
-          </h2>
-
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Add primary project URLs.
-            Dedicated project links and
-            media galleries will be
-            managed separately.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold">
+          Links & media
+        </h2>
 
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <TextField
@@ -1233,7 +1443,9 @@ export function AdminProjectCreateForm() {
                 value
               )
             }
-            placeholder="https://github.com/..."
+            disabled={
+              deleted
+            }
           />
 
           <TextField
@@ -1248,7 +1460,9 @@ export function AdminProjectCreateForm() {
                 value
               )
             }
-            placeholder="https://..."
+            disabled={
+              deleted
+            }
           />
 
           <TextField
@@ -1263,7 +1477,9 @@ export function AdminProjectCreateForm() {
                 value
               )
             }
-            placeholder="https://..."
+            disabled={
+              deleted
+            }
           />
 
           <TextField
@@ -1278,23 +1494,17 @@ export function AdminProjectCreateForm() {
                 value
               )
             }
-            placeholder="https://..."
+            disabled={
+              deleted
+            }
           />
         </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-background p-5 sm:p-6">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Timeline & ordering
-          </h2>
-
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Record the project timeline
-            and its preferred portfolio
-            ordering.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold">
+          Timeline & ordering
+        </h2>
 
         <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           <TextField
@@ -1309,6 +1519,9 @@ export function AdminProjectCreateForm() {
                 value
               )
             }
+            disabled={
+              deleted
+            }
           />
 
           <TextField
@@ -1322,6 +1535,9 @@ export function AdminProjectCreateForm() {
                 "completedAt",
                 value
               )
+            }
+            disabled={
+              deleted
             }
           />
 
@@ -1339,23 +1555,17 @@ export function AdminProjectCreateForm() {
             }
             min={0}
             step={1}
-            helperText="Lower values appear earlier when display order is used."
+            disabled={
+              deleted
+            }
           />
         </div>
       </section>
 
       <section className="rounded-2xl border border-border bg-background p-5 sm:p-6">
-        <div>
-          <h2 className="text-lg font-semibold">
-            Search metadata
-          </h2>
-
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Prepare optional metadata for
-            search engines and social
-            previews.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold">
+          Search metadata
+        </h2>
 
         <div className="mt-5 grid gap-5 md:grid-cols-2">
           <TextField
@@ -1370,6 +1580,9 @@ export function AdminProjectCreateForm() {
               )
             }
             maxLength={70}
+            disabled={
+              deleted
+            }
           />
 
           <TextField
@@ -1384,40 +1597,45 @@ export function AdminProjectCreateForm() {
               )
             }
             maxLength={170}
+            disabled={
+              deleted
+            }
           />
         </div>
       </section>
 
-      <div className="sticky bottom-4 z-20 flex justify-end">
-        <div className="rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur">
-          <Button
-            type="submit"
-            size="lg"
-            disabled={
-              saving
-            }
-          >
-            {saving ? (
-              <>
-                <Loader2
-                  className="animate-spin"
-                  aria-hidden="true"
-                />
+      {!deleted ? (
+        <div className="sticky bottom-4 z-20 flex justify-end">
+          <div className="rounded-xl border border-border bg-background/95 p-2 shadow-lg backdrop-blur">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={
+                saving
+              }
+            >
+              {saving ? (
+                <>
+                  <Loader2
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
 
-                Creating...
-              </>
-            ) : (
-              <>
-                <Save
-                  aria-hidden="true"
-                />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save
+                    aria-hidden="true"
+                  />
 
-                Create draft
-              </>
-            )}
-          </Button>
+                  Save changes
+                </>
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </form>
   )
 }

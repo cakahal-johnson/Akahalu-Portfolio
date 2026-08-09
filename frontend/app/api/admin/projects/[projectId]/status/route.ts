@@ -21,7 +21,7 @@ function invalidJsonResponse(): NextResponse {
           "invalid_request_body",
 
         message:
-          "The project featured request body must contain valid JSON.",
+          "The project status request body must contain valid JSON.",
       },
     },
     {
@@ -52,7 +52,7 @@ export async function PATCH(
     request,
     `/admin/portfolio/projects/${encodeURIComponent(
       projectId
-    )}/featured`,
+    )}/status`,
     {
       method:
         "PATCH",
