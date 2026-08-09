@@ -48,12 +48,27 @@ class ProjectRepository(
         """
         Return a project by UUID.
 
-        Related media, links, and technologies are loaded when
-        ``include_related`` is enabled.
+        ``populate_existing`` ensures that an already-present
+        identity-map instance receives current database state after
+        project mutations such as category, status, visibility, or
+        technology changes.
+
+        Standard project relationships are loaded explicitly when
+        requested. Reverse relationships that would recursively expand
+        the object graph are controlled by their model-level loader
+        configuration rather than query-level options.
         """
 
-        statement = select(Project).where(
-            Project.id == project_id,
+        statement = (
+            select(
+                Project,
+            )
+            .where(
+                Project.id == project_id,
+            )
+            .execution_options(
+                populate_existing=True,
+            )
         )
 
         if not include_deleted:
@@ -63,16 +78,32 @@ class ProjectRepository(
 
         if include_related:
             statement = statement.options(
-                selectinload(Project.media),
-                selectinload(Project.links),
+                selectinload(
+                    Project.media,
+                ),
+                selectinload(
+                    Project.links,
+                ),
                 selectinload(
                     Project.technology_associations,
-                ).selectinload(
-                    ProjectTechnologyAssociation.technology,
+                ),
+            )
+        else:
+            statement = statement.options(
+                noload(
+                    Project.media,
+                ),
+                noload(
+                    Project.links,
+                ),
+                noload(
+                    Project.technology_associations,
                 ),
             )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.unique().scalar_one_or_none()
 
@@ -93,8 +124,16 @@ class ProjectRepository(
 
         normalized_slug = slug.strip().lower()
 
-        statement = select(Project).where(
-            Project.slug == normalized_slug,
+        statement = (
+            select(
+                Project,
+            )
+            .where(
+                Project.slug == normalized_slug,
+            )
+            .execution_options(
+                populate_existing=True,
+            )
         )
 
         if not include_deleted:
@@ -104,16 +143,32 @@ class ProjectRepository(
 
         if include_related:
             statement = statement.options(
-                selectinload(Project.media),
-                selectinload(Project.links),
+                selectinload(
+                    Project.media,
+                ),
+                selectinload(
+                    Project.links,
+                ),
                 selectinload(
                     Project.technology_associations,
-                ).selectinload(
-                    ProjectTechnologyAssociation.technology,
+                ),
+            )
+        else:
+            statement = statement.options(
+                noload(
+                    Project.media,
+                ),
+                noload(
+                    Project.links,
+                ),
+                noload(
+                    Project.technology_associations,
                 ),
             )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.unique().scalar_one_or_none()
 
@@ -128,14 +183,16 @@ class ProjectRepository(
         Public projects must be published, publicly visible,
         timestamped, and not soft-deleted.
 
-        Only active, non-deleted related links and technologies are
-        included. Soft-deleted media and associations are excluded.
+        Only active, non-deleted related links, media, technology
+        assignments, and technologies are returned.
         """
 
         normalized_slug = slug.strip().lower()
 
         statement = (
-            select(Project)
+            select(
+                Project,
+            )
             .where(
                 Project.slug == normalized_slug,
                 Project.status == "published",
@@ -147,12 +204,14 @@ class ProjectRepository(
                 populate_existing=True,
             )
             .options(
-                selectinload(Project.media),
-                selectinload(Project.links),
+                selectinload(
+                    Project.media,
+                ),
+                selectinload(
+                    Project.links,
+                ),
                 selectinload(
                     Project.technology_associations,
-                ).selectinload(
-                    ProjectTechnologyAssociation.technology,
                 ),
                 with_loader_criteria(
                     ProjectMedia,
@@ -171,7 +230,9 @@ class ProjectRepository(
                 ),
                 with_loader_criteria(
                     ProjectTechnologyAssociation,
-                    ProjectTechnologyAssociation.deleted_at.is_(None),
+                    ProjectTechnologyAssociation.deleted_at.is_(
+                        None,
+                    ),
                     include_aliases=True,
                 ),
                 with_loader_criteria(
@@ -187,7 +248,9 @@ class ProjectRepository(
             )
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.unique().scalar_one_or_none()
 
@@ -268,14 +331,20 @@ class ProjectRepository(
                 exists().where(
                     ProjectCategory.id == Project.category_id,
                     ProjectCategory.slug == normalized_category_slug,
-                    ProjectCategory.is_active.is_(True),
-                    ProjectCategory.deleted_at.is_(None),
+                    ProjectCategory.is_active.is_(
+                        True,
+                    ),
+                    ProjectCategory.deleted_at.is_(
+                        None,
+                    ),
                 )
             )
 
         if is_featured is not None:
             filters.append(
-                Project.is_featured.is_(is_featured),
+                Project.is_featured.is_(
+                    is_featured,
+                ),
             )
 
         if technology_id is not None:
@@ -283,7 +352,9 @@ class ProjectRepository(
                 exists().where(
                     ProjectTechnologyAssociation.project_id == Project.id,
                     ProjectTechnologyAssociation.technology_id == technology_id,
-                    ProjectTechnologyAssociation.deleted_at.is_(None),
+                    ProjectTechnologyAssociation.deleted_at.is_(
+                        None,
+                    ),
                 )
             )
 
@@ -298,18 +369,28 @@ class ProjectRepository(
                 exists().where(
                     ProjectTechnologyAssociation.project_id == Project.id,
                     ProjectTechnologyAssociation.technology_id == ProjectTechnology.id,
-                    ProjectTechnologyAssociation.deleted_at.is_(None),
+                    ProjectTechnologyAssociation.deleted_at.is_(
+                        None,
+                    ),
                     ProjectTechnology.slug == normalized_technology_slug,
-                    ProjectTechnology.is_active.is_(True),
-                    ProjectTechnology.deleted_at.is_(None),
+                    ProjectTechnology.is_active.is_(
+                        True,
+                    ),
+                    ProjectTechnology.deleted_at.is_(
+                        None,
+                    ),
                 )
             )
 
         count_statement = select(
             func.count(
-                distinct(Project.id),
+                distinct(
+                    Project.id,
+                ),
             ),
-        ).where(*filters)
+        ).where(
+            *filters,
+        )
 
         total_result = await session.execute(
             count_statement,
@@ -320,18 +401,24 @@ class ProjectRepository(
         )
 
         statement = (
-            select(Project)
-            .where(*filters)
+            select(
+                Project,
+            )
+            .where(
+                *filters,
+            )
             .execution_options(
                 populate_existing=True,
             )
             .options(
-                selectinload(Project.media),
-                selectinload(Project.links),
+                selectinload(
+                    Project.media,
+                ),
+                selectinload(
+                    Project.links,
+                ),
                 selectinload(
                     Project.technology_associations,
-                ).selectinload(
-                    ProjectTechnologyAssociation.technology,
                 ),
                 with_loader_criteria(
                     ProjectMedia,
@@ -350,7 +437,9 @@ class ProjectRepository(
                 ),
                 with_loader_criteria(
                     ProjectTechnologyAssociation,
-                    ProjectTechnologyAssociation.deleted_at.is_(None),
+                    ProjectTechnologyAssociation.deleted_at.is_(
+                        None,
+                    ),
                     include_aliases=True,
                 ),
                 with_loader_criteria(
@@ -360,7 +449,9 @@ class ProjectRepository(
                 ),
                 with_loader_criteria(
                     ProjectTechnology,
-                    ProjectTechnology.deleted_at.is_(None),
+                    ProjectTechnology.deleted_at.is_(
+                        None,
+                    ),
                     include_aliases=True,
                 ),
             )
@@ -370,11 +461,17 @@ class ProjectRepository(
                 Project.published_at.desc(),
                 Project.id.asc(),
             )
-            .offset(offset)
-            .limit(limit)
+            .offset(
+                offset,
+            )
+            .limit(
+                limit,
+            )
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         projects = result.unique().scalars().all()
 
@@ -393,7 +490,9 @@ class ProjectRepository(
         """
 
         statement = (
-            select(Project)
+            select(
+                Project,
+            )
             .where(
                 Project.status == "published",
                 Project.visibility == "public",
@@ -405,41 +504,55 @@ class ProjectRepository(
                 populate_existing=True,
             )
             .options(
-                selectinload(Project.media),
-                selectinload(Project.links),
+                selectinload(
+                    Project.media,
+                ),
+                selectinload(
+                    Project.links,
+                ),
                 selectinload(
                     Project.technology_associations,
-                ).selectinload(
-                    ProjectTechnologyAssociation.technology,
                 ),
                 with_loader_criteria(
                     ProjectMedia,
-                    ProjectMedia.deleted_at.is_(None),
+                    ProjectMedia.deleted_at.is_(
+                        None,
+                    ),
                     include_aliases=True,
                 ),
                 with_loader_criteria(
                     ProjectLink,
-                    ProjectLink.is_active.is_(True),
+                    ProjectLink.is_active.is_(
+                        True,
+                    ),
                     include_aliases=True,
                 ),
                 with_loader_criteria(
                     ProjectLink,
-                    ProjectLink.deleted_at.is_(None),
+                    ProjectLink.deleted_at.is_(
+                        None,
+                    ),
                     include_aliases=True,
                 ),
                 with_loader_criteria(
                     ProjectTechnologyAssociation,
-                    ProjectTechnologyAssociation.deleted_at.is_(None),
+                    ProjectTechnologyAssociation.deleted_at.is_(
+                        None,
+                    ),
                     include_aliases=True,
                 ),
                 with_loader_criteria(
                     ProjectTechnology,
-                    ProjectTechnology.is_active.is_(True),
+                    ProjectTechnology.is_active.is_(
+                        True,
+                    ),
                     include_aliases=True,
                 ),
                 with_loader_criteria(
                     ProjectTechnology,
-                    ProjectTechnology.deleted_at.is_(None),
+                    ProjectTechnology.deleted_at.is_(
+                        None,
+                    ),
                     include_aliases=True,
                 ),
             )
@@ -448,10 +561,14 @@ class ProjectRepository(
                 Project.published_at.desc(),
                 Project.id.asc(),
             )
-            .limit(limit)
+            .limit(
+                limit,
+            )
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.unique().scalars().all()
 
@@ -474,21 +591,10 @@ class ProjectRepository(
         """
         Return paginated projects for administrative management.
 
-        Administrative listings can filter by project state,
-        visibility, category, technology, and featured status.
-
-        The listing intentionally suppresses ORM relationship branches
-        that are not part of the administrative response contract.
-
-        Audit ownership is represented by ``created_by_id`` and
-        ``updated_by_id`` on ProjectAdminRead, so full User objects are
-        not loaded.
-
-        Technology summaries are required, but the reverse
-        ProjectTechnology -> project_associations relationship and the
-        ProjectTechnologyAssociation -> project relationship are not.
-        Suppressing those reverse branches prevents SQLAlchemy from
-        recursively expanding the project/technology graph.
+        Reverse relationships are controlled by model-level loader
+        configuration so query-level loader options remain simple and
+        cannot become conflicting sticky strategies on identity-map
+        instances.
         """
 
         filters: list[ColumnElement[bool]] = []
@@ -551,7 +657,9 @@ class ProjectRepository(
 
         if is_featured is not None:
             filters.append(
-                Project.is_featured.is_(is_featured),
+                Project.is_featured.is_(
+                    is_featured,
+                ),
             )
 
         if technology_id is not None:
@@ -559,7 +667,9 @@ class ProjectRepository(
                 exists().where(
                     ProjectTechnologyAssociation.project_id == Project.id,
                     ProjectTechnologyAssociation.technology_id == technology_id,
-                    ProjectTechnologyAssociation.deleted_at.is_(None),
+                    ProjectTechnologyAssociation.deleted_at.is_(
+                        None,
+                    ),
                 )
             )
 
@@ -585,14 +695,24 @@ class ProjectRepository(
         normalized_direction = sort_direction.strip().lower()
 
         sort_expression = (
-            asc(sort_column) if normalized_direction == "asc" else desc(sort_column)
+            asc(
+                sort_column,
+            )
+            if normalized_direction == "asc"
+            else desc(
+                sort_column,
+            )
         )
 
         count_statement = select(
             func.count(
-                distinct(Project.id),
+                distinct(
+                    Project.id,
+                ),
             ),
-        ).where(*filters)
+        ).where(
+            *filters,
+        )
 
         total_result = await session.execute(
             count_statement,
@@ -602,24 +722,13 @@ class ProjectRepository(
             total_result.scalar_one(),
         )
 
-        technology_loader = selectinload(
-            Project.technology_associations,
-        ).options(
-            noload(
-                ProjectTechnologyAssociation.project,
-            ),
-            selectinload(
-                ProjectTechnologyAssociation.technology,
-            ).options(
-                noload(
-                    ProjectTechnology.project_associations,
-                ),
-            ),
-        )
-
         statement = (
-            select(Project)
-            .where(*filters)
+            select(
+                Project,
+            )
+            .where(
+                *filters,
+            )
             .options(
                 selectinload(
                     Project.media,
@@ -627,23 +736,25 @@ class ProjectRepository(
                 selectinload(
                     Project.links,
                 ),
-                technology_loader,
-                noload(
-                    Project.created_by,
-                ),
-                noload(
-                    Project.updated_by,
+                selectinload(
+                    Project.technology_associations,
                 ),
             )
             .order_by(
                 sort_expression,
                 Project.id.asc(),
             )
-            .offset(offset)
-            .limit(limit)
+            .offset(
+                offset,
+            )
+            .limit(
+                limit,
+            )
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         projects = result.unique().scalars().all()
 
@@ -676,16 +787,24 @@ class ProjectRepository(
 
         if not include_deleted:
             conditions.append(
-                Project.deleted_at.is_(None),
+                Project.deleted_at.is_(
+                    None,
+                ),
             )
 
         statement = select(
-            exists().where(*conditions),
+            exists().where(
+                *conditions,
+            ),
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
-        return bool(result.scalar_one())
+        return bool(
+            result.scalar_one(),
+        )
 
     async def count_public(
         self,
@@ -704,8 +823,12 @@ class ProjectRepository(
         conditions: list[ColumnElement[bool]] = [
             Project.status == "published",
             Project.visibility == "public",
-            Project.published_at.is_not(None),
-            Project.deleted_at.is_(None),
+            Project.published_at.is_not(
+                None,
+            ),
+            Project.deleted_at.is_(
+                None,
+            ),
         ]
 
         if category_id is not None:
@@ -715,16 +838,26 @@ class ProjectRepository(
 
         if is_featured is not None:
             conditions.append(
-                Project.is_featured.is_(is_featured),
+                Project.is_featured.is_(
+                    is_featured,
+                ),
             )
 
         statement = select(
-            func.count(Project.id),
-        ).where(*conditions)
+            func.count(
+                Project.id,
+            ),
+        ).where(
+            *conditions,
+        )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
-        return int(result.scalar_one())
+        return int(
+            result.scalar_one(),
+        )
 
     async def has_category_projects(
         self,
@@ -745,16 +878,24 @@ class ProjectRepository(
 
         if not include_deleted:
             conditions.append(
-                Project.deleted_at.is_(None),
+                Project.deleted_at.is_(
+                    None,
+                ),
             )
 
         statement = select(
-            exists().where(*conditions),
+            exists().where(
+                *conditions,
+            ),
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
-        return bool(result.scalar_one())
+        return bool(
+            result.scalar_one(),
+        )
 
 
 project_repository = ProjectRepository()

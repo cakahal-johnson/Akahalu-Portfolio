@@ -257,10 +257,15 @@ class ProjectService:
         )
 
         title = self._normalize_title(
-            str(data["title"]),
+            str(
+                data["title"],
+            ),
         )
+
         slug = self._normalize_slug(
-            str(data["slug"]),
+            str(
+                data["slug"],
+            ),
         )
 
         await self._ensure_slug_available(
@@ -269,7 +274,9 @@ class ProjectService:
         )
 
         category_id = self._coerce_optional_uuid(
-            data.get("category_id"),
+            data.get(
+                "category_id",
+            ),
         )
 
         category = await self._get_available_category(
@@ -284,6 +291,7 @@ class ProjectService:
 
         data["title"] = title
         data["slug"] = slug
+
         data["category_id"] = category.id if category is not None else None
 
         self._normalize_project_dates(
@@ -298,7 +306,9 @@ class ProjectService:
             data["created_by_id"] = actor_user_id
             data["updated_by_id"] = actor_user_id
 
-        if self._is_published_data(data):
+        if self._is_published_data(
+            data,
+        ):
             self._validate_publication_data(
                 data,
                 category,
@@ -322,9 +332,6 @@ class ProjectService:
         )
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
         return await self.get_by_id(
             session,
@@ -359,12 +366,16 @@ class ProjectService:
 
         if "title" in data:
             data["title"] = self._normalize_title(
-                str(data["title"]),
+                str(
+                    data["title"],
+                ),
             )
 
         if "slug" in data:
             normalized_slug = self._normalize_slug(
-                str(data["slug"]),
+                str(
+                    data["slug"],
+                ),
             )
 
             await self._ensure_slug_available(
@@ -390,6 +401,7 @@ class ProjectService:
             data["category_id"] = (
                 selected_category.id if selected_category is not None else None
             )
+
         elif project.category_id is not None:
             selected_category = await self._get_available_category(
                 session,
@@ -431,7 +443,10 @@ class ProjectService:
                 current_project=project,
             )
 
-        for field_name, value in data.items():
+        for (
+            field_name,
+            value,
+        ) in data.items():
             setattr(
                 project,
                 field_name,
@@ -439,9 +454,6 @@ class ProjectService:
             )
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
         return await self.get_by_id(
             session,
@@ -474,7 +486,10 @@ class ProjectService:
                 is_featured=False,
                 sort_order=sort_order,
             )
-            for sort_order, technology in enumerate(
+            for (
+                sort_order,
+                technology,
+            ) in enumerate(
                 technologies,
             )
         ]
@@ -490,9 +505,6 @@ class ProjectService:
             project.updated_by_id = actor_user_id
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
         return await self.get_by_id(
             session,
@@ -533,16 +545,21 @@ class ProjectService:
         )
 
         project.status = "published"
+
         project.visibility = normalized_visibility
-        project.published_at = published_at or project.published_at or datetime.now(UTC)
+
+        project.published_at = (
+            published_at
+            or project.published_at
+            or datetime.now(
+                UTC,
+            )
+        )
 
         if actor_user_id is not None:
             project.updated_by_id = actor_user_id
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
         return await self.get_by_id(
             session,
@@ -575,11 +592,11 @@ class ProjectService:
             project.updated_by_id = actor_user_id
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
-        return project
+        return await self.get_by_id(
+            session,
+            project.id,
+        )
 
     async def archive(
         self,
@@ -603,11 +620,11 @@ class ProjectService:
             project.updated_by_id = actor_user_id
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
-        return project
+        return await self.get_by_id(
+            session,
+            project.id,
+        )
 
     async def set_featured(
         self,
@@ -640,11 +657,11 @@ class ProjectService:
             project.updated_by_id = actor_user_id
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
-        return project
+        return await self.get_by_id(
+            session,
+            project.id,
+        )
 
     async def soft_delete(
         self,
@@ -674,11 +691,12 @@ class ProjectService:
                 association.soft_delete()
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
-        return project
+        return await self.get_by_id(
+            session,
+            project.id,
+            include_deleted=True,
+        )
 
     async def restore(
         self,
@@ -731,9 +749,6 @@ class ProjectService:
             project.updated_by_id = actor_user_id
 
         await session.flush()
-        await session.refresh(
-            project,
-        )
 
         return await self.get_by_id(
             session,
@@ -790,6 +805,7 @@ class ProjectService:
         """Resolve unique active technologies while preserving order."""
 
         technologies: list[ProjectTechnology] = []
+
         seen_ids: set[UUID] = set()
 
         for technology_id in technology_ids:
@@ -814,6 +830,7 @@ class ProjectService:
             seen_ids.add(
                 technology_id,
             )
+
             technologies.append(
                 technology,
             )
@@ -917,12 +934,14 @@ class ProjectService:
                         is_featured=assignment["is_featured"],
                     )
                 )
+
                 continue
 
             if existing_association.deleted_at is not None:
                 existing_association.restore()
 
             existing_association.sort_order = assignment["sort_order"]
+
             existing_association.is_featured = assignment["is_featured"]
 
         await session.flush()
@@ -1001,8 +1020,15 @@ class ProjectService:
                 current_project.published_at if current_project is not None else None
             )
 
-            if data.get("published_at") is None:
-                data["published_at"] = existing_published_at or datetime.now(UTC)
+            if (
+                data.get(
+                    "published_at",
+                )
+                is None
+            ):
+                data["published_at"] = existing_published_at or datetime.now(
+                    UTC,
+                )
 
             return
 
@@ -1039,9 +1065,13 @@ class ProjectService:
             return []
 
         normalized: list[TechnologyAssignmentData] = []
+
         seen_ids: set[UUID] = set()
 
-        for fallback_sort_order, raw_assignment in enumerate(
+        for (
+            fallback_sort_order,
+            raw_assignment,
+        ) in enumerate(
             raw_assignments,
         ):
             if not isinstance(
@@ -1070,7 +1100,9 @@ class ProjectService:
             )
 
             sort_order = (
-                int(raw_sort_order)
+                int(
+                    raw_sort_order,
+                )
                 if raw_sort_order is not None
                 else fallback_sort_order
             )
@@ -1240,7 +1272,9 @@ class ProjectService:
             return value
 
         return UUID(
-            str(value),
+            str(
+                value,
+            ),
         )
 
     @staticmethod
@@ -1299,7 +1333,7 @@ class ProjectService:
     def _normalize_optional_slug(
         value: str | None,
     ) -> str | None:
-        """Normalize an optional slug filter."""
+        """Normalize an optional slug."""
 
         if value is None:
             return None

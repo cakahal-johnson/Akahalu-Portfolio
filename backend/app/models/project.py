@@ -16,12 +16,18 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import CITEXT
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.db.base import BaseModel, ReprMixin
 
 if TYPE_CHECKING:
-    from app.models.project_associations import ProjectTechnologyAssociation
+    from app.models.project_associations import (
+        ProjectTechnologyAssociation,
+    )
     from app.models.project_category import ProjectCategory
     from app.models.project_link import ProjectLink
     from app.models.project_media import ProjectMedia
@@ -29,15 +35,20 @@ if TYPE_CHECKING:
     from app.models.user import User
 
 
-class Project(BaseModel, ReprMixin):
+class Project(
+    BaseModel,
+    ReprMixin,
+):
     """
-    Represents a portfolio project and its public case-study content.
+    Represent a portfolio project and its public case-study content.
 
-    Projects support controlled publication, visibility, categorization,
-    ordered technologies, media assets, and supplementary external links.
+    Projects support controlled publication, visibility,
+    categorization, ordered technologies, media assets, and
+    supplementary external links.
 
-    Public repository queries must exclude soft-deleted projects and require
-    published status, public visibility, and a publication timestamp.
+    Public repository queries must exclude soft-deleted projects and
+    require published status, public visibility, and a publication
+    timestamp.
     """
 
     __tablename__ = "projects"
@@ -97,7 +108,9 @@ class Project(BaseModel, ReprMixin):
         String(20),
         nullable=False,
         default="draft",
-        server_default=text("'draft'"),
+        server_default=text(
+            "'draft'",
+        ),
         index=True,
     )
 
@@ -105,7 +118,9 @@ class Project(BaseModel, ReprMixin):
         String(20),
         nullable=False,
         default="private",
-        server_default=text("'private'"),
+        server_default=text(
+            "'private'",
+        ),
         index=True,
     )
 
@@ -113,7 +128,9 @@ class Project(BaseModel, ReprMixin):
         Boolean,
         nullable=False,
         default=False,
-        server_default=text("false"),
+        server_default=text(
+            "false",
+        ),
         index=True,
     )
 
@@ -121,7 +138,9 @@ class Project(BaseModel, ReprMixin):
         Integer,
         nullable=False,
         default=0,
-        server_default=text("0"),
+        server_default=text(
+            "0",
+        ),
     )
 
     repository_url: Mapped[str | None] = mapped_column(
@@ -145,17 +164,23 @@ class Project(BaseModel, ReprMixin):
     )
 
     started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
+        DateTime(
+            timezone=True,
+        ),
         nullable=True,
     )
 
     completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
+        DateTime(
+            timezone=True,
+        ),
         nullable=True,
     )
 
     published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
+        DateTime(
+            timezone=True,
+        ),
         nullable=True,
         index=True,
     )
@@ -217,20 +242,24 @@ class Project(BaseModel, ReprMixin):
         back_populates="project",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        order_by="ProjectTechnologyAssociation.sort_order",
+        order_by=("ProjectTechnologyAssociation.sort_order"),
         lazy="selectin",
     )
 
     created_by: Mapped[User | None] = relationship(
         "User",
-        foreign_keys=[created_by_id],
-        lazy="joined",
+        foreign_keys=[
+            created_by_id,
+        ],
+        lazy="noload",
     )
 
     updated_by: Mapped[User | None] = relationship(
         "User",
-        foreign_keys=[updated_by_id],
-        lazy="joined",
+        foreign_keys=[
+            updated_by_id,
+        ],
+        lazy="noload",
     )
 
     __table_args__ = (
@@ -243,7 +272,7 @@ class Project(BaseModel, ReprMixin):
             name="projects_slug_not_blank",
         ),
         CheckConstraint(
-            "length(btrim(short_description)) >= 10",
+            ("length(btrim(short_description)) >= 10"),
             name="projects_short_description_min_length",
         ),
         CheckConstraint(
@@ -267,11 +296,11 @@ class Project(BaseModel, ReprMixin):
             name="projects_technical_highlights_not_blank",
         ),
         CheckConstraint(
-            "status IN ('draft', 'published', 'archived')",
+            ("status IN ('draft', 'published', 'archived')"),
             name="projects_status_allowed",
         ),
         CheckConstraint(
-            "visibility IN ('public', 'private', 'unlisted')",
+            ("visibility IN ('public', 'private', 'unlisted')"),
             name="projects_visibility_allowed",
         ),
         CheckConstraint(
@@ -283,7 +312,7 @@ class Project(BaseModel, ReprMixin):
             name="projects_repository_url_not_blank",
         ),
         CheckConstraint(
-            "live_url IS NULL OR length(btrim(live_url)) > 0",
+            ("live_url IS NULL OR length(btrim(live_url)) > 0"),
             name="projects_live_url_not_blank",
         ),
         CheckConstraint(
@@ -303,11 +332,11 @@ class Project(BaseModel, ReprMixin):
             name="projects_completion_not_before_start",
         ),
         CheckConstraint(
-            "status <> 'published' OR published_at IS NOT NULL",
+            ("status <> 'published' OR published_at IS NOT NULL"),
             name="projects_published_requires_timestamp",
         ),
         CheckConstraint(
-            "seo_title IS NULL OR length(btrim(seo_title)) > 0",
+            ("seo_title IS NULL OR length(btrim(seo_title)) > 0"),
             name="projects_seo_title_not_blank",
         ),
         CheckConstraint(
@@ -321,14 +350,18 @@ class Project(BaseModel, ReprMixin):
             "is_featured",
             "sort_order",
             "created_at",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text(
+                "deleted_at IS NULL",
+            ),
         ),
         Index(
             "ix_projects_category_listing",
             "category_id",
             "status",
             "sort_order",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text(
+                "deleted_at IS NULL",
+            ),
         ),
         Index(
             "ix_projects_public_listing",
@@ -336,10 +369,12 @@ class Project(BaseModel, ReprMixin):
             "sort_order",
             "published_at",
             postgresql_where=text(
-                "deleted_at IS NULL "
-                "AND status = 'published' "
-                "AND visibility = 'public' "
-                "AND published_at IS NOT NULL"
+                (
+                    "deleted_at IS NULL "
+                    "AND status = 'published' "
+                    "AND visibility = 'public' "
+                    "AND published_at IS NOT NULL"
+                )
             ),
         ),
     )
@@ -357,12 +392,14 @@ class Project(BaseModel, ReprMixin):
         return self.status == "archived"
 
     @property
-    def primary_media(self) -> ProjectMedia | None:
+    def primary_media(
+        self,
+    ) -> ProjectMedia | None:
         return next(
             (
                 media
                 for media in self.media
-                if media.is_primary and not media.is_deleted
+                if (media.is_primary and not media.is_deleted)
             ),
             None,
         )
@@ -392,8 +429,8 @@ class Project(BaseModel, ReprMixin):
         """
         Return active and available technologies for public schemas.
 
-        Public project responses expose technology summaries directly rather
-        than the association metadata used by administrative responses.
+        Public project responses expose technology summaries directly
+        rather than association metadata.
         """
 
         return [

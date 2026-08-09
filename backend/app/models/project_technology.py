@@ -12,22 +12,34 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import CITEXT
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.db.base import BaseModel, ReprMixin
 
 if TYPE_CHECKING:
-    from app.models.project_associations import ProjectTechnologyAssociation
+    from app.models.project_associations import (
+        ProjectTechnologyAssociation,
+    )
 
 
-class ProjectTechnology(BaseModel, ReprMixin):
+class ProjectTechnology(
+    BaseModel,
+    ReprMixin,
+):
     """
     Administrator-managed technology catalogue.
 
     Technologies represent programming languages, frameworks,
-    databases, cloud providers, DevOps tooling, testing frameworks,
-    operating systems, and other reusable skills that can be attached
-    to multiple portfolio projects.
+    libraries, databases, cloud providers, DevOps tools, testing
+    frameworks, platforms, services, and other reusable skills.
+
+    The reverse project-association collection is intentionally not
+    loaded automatically. Project assignment validation and usage
+    checks use explicit repository queries instead.
     """
 
     __tablename__ = "project_technologies"
@@ -55,7 +67,9 @@ class ProjectTechnology(BaseModel, ReprMixin):
         String(30),
         nullable=False,
         default="other",
-        server_default=text("'other'"),
+        server_default=text(
+            "'other'",
+        ),
         index=True,
     )
 
@@ -78,7 +92,9 @@ class ProjectTechnology(BaseModel, ReprMixin):
         Boolean,
         nullable=False,
         default=True,
-        server_default=text("true"),
+        server_default=text(
+            "true",
+        ),
         index=True,
     )
 
@@ -86,7 +102,9 @@ class ProjectTechnology(BaseModel, ReprMixin):
         Integer,
         nullable=False,
         default=0,
-        server_default=text("0"),
+        server_default=text(
+            "0",
+        ),
     )
 
     project_associations: Mapped[list[ProjectTechnologyAssociation]] = relationship(
@@ -94,8 +112,8 @@ class ProjectTechnology(BaseModel, ReprMixin):
         back_populates="technology",
         cascade="save-update, merge",
         passive_deletes=True,
-        order_by="ProjectTechnologyAssociation.sort_order",
-        lazy="selectin",
+        order_by=("ProjectTechnologyAssociation.sort_order"),
+        lazy="noload",
     )
 
     __table_args__ = (
@@ -108,7 +126,7 @@ class ProjectTechnology(BaseModel, ReprMixin):
             name="project_technologies_slug_not_blank",
         ),
         CheckConstraint(
-            "description IS NULL OR length(btrim(description)) > 0",
+            ("description IS NULL OR length(btrim(description)) > 0"),
             name="project_technologies_description_not_blank",
         ),
         CheckConstraint(
@@ -130,7 +148,7 @@ class ProjectTechnology(BaseModel, ReprMixin):
             name="project_technologies_category_allowed",
         ),
         CheckConstraint(
-            "icon IS NULL OR length(btrim(icon)) > 0",
+            ("icon IS NULL OR length(btrim(icon)) > 0"),
             name="project_technologies_icon_not_blank",
         ),
         CheckConstraint(
@@ -138,19 +156,19 @@ class ProjectTechnology(BaseModel, ReprMixin):
             name="project_technologies_official_url_not_blank",
         ),
         CheckConstraint(
-            "color IS NULL OR color ~ '^#[0-9A-Fa-f]{6}$'",
+            ("color IS NULL OR color ~ '^#[0-9A-Fa-f]{6}$'"),
             name="project_technologies_color_hex_format",
         ),
         CheckConstraint(
             "sort_order >= 0",
-            name="project_technologies_sort_order_non_negative",
+            name=("project_technologies_sort_order_non_negative"),
         ),
         Index(
             "ix_project_technologies_public_listing",
             "category",
             "sort_order",
             "name",
-            postgresql_where=text("deleted_at IS NULL AND is_active = true"),
+            postgresql_where=text(("deleted_at IS NULL AND is_active = true")),
         ),
     )
 

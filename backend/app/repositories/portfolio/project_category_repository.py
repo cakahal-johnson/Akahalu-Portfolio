@@ -10,6 +10,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import noload
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.project import Project
@@ -35,12 +36,23 @@ class ProjectCategoryRepository(
         """
         Return a project category by UUID.
 
-        Soft-deleted records are excluded unless
-        ``include_deleted`` is enabled.
+        The reverse project collection is suppressed because category
+        validation and administrative detail responses do not require
+        every project assigned to the category.
         """
 
-        statement = select(ProjectCategory).where(
-            ProjectCategory.id == category_id,
+        statement = (
+            select(
+                ProjectCategory,
+            )
+            .where(
+                ProjectCategory.id == category_id,
+            )
+            .options(
+                noload(
+                    ProjectCategory.projects,
+                ),
+            )
         )
 
         if not include_deleted:
@@ -48,7 +60,9 @@ class ProjectCategoryRepository(
                 ProjectCategory.deleted_at.is_(None),
             )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.scalar_one_or_none()
 
@@ -62,14 +76,23 @@ class ProjectCategoryRepository(
         """
         Return a project category by its normalized slug.
 
-        Soft-deleted records are excluded unless
-        ``include_deleted`` is enabled.
+        The reverse project collection is intentionally suppressed.
         """
 
         normalized_slug = slug.strip().lower()
 
-        statement = select(ProjectCategory).where(
-            ProjectCategory.slug == normalized_slug,
+        statement = (
+            select(
+                ProjectCategory,
+            )
+            .where(
+                ProjectCategory.slug == normalized_slug,
+            )
+            .options(
+                noload(
+                    ProjectCategory.projects,
+                ),
+            )
         )
 
         if not include_deleted:
@@ -77,7 +100,9 @@ class ProjectCategoryRepository(
                 ProjectCategory.deleted_at.is_(None),
             )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.scalar_one_or_none()
 
@@ -93,10 +118,17 @@ class ProjectCategoryRepository(
         """
 
         statement = (
-            select(ProjectCategory)
+            select(
+                ProjectCategory,
+            )
             .where(
                 ProjectCategory.is_active.is_(True),
                 ProjectCategory.deleted_at.is_(None),
+            )
+            .options(
+                noload(
+                    ProjectCategory.projects,
+                ),
             )
             .order_by(
                 ProjectCategory.sort_order.asc(),
@@ -197,8 +229,15 @@ class ProjectCategoryRepository(
         )
 
         statement = (
-            select(ProjectCategory)
+            select(
+                ProjectCategory,
+            )
             .where(*filters)
+            .options(
+                noload(
+                    ProjectCategory.projects,
+                ),
+            )
             .order_by(
                 sort_expression,
                 ProjectCategory.id.asc(),

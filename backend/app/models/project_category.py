@@ -12,7 +12,11 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import CITEXT
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.db.base import BaseModel, ReprMixin
 
@@ -20,12 +24,19 @@ if TYPE_CHECKING:
     from app.models.project import Project
 
 
-class ProjectCategory(BaseModel, ReprMixin):
+class ProjectCategory(
+    BaseModel,
+    ReprMixin,
+):
     """
     Administrator-managed project category.
 
-    Categories provide a stable taxonomy for portfolio projects and are
-    intentionally independent of frontend presentation.
+    Categories provide a stable taxonomy for portfolio projects and
+    remain independent of frontend presentation.
+
+    The reverse ``projects`` collection is intentionally not loaded
+    automatically. Category administration uses dedicated repository
+    queries when project counts or assignment checks are required.
     """
 
     __tablename__ = "project_categories"
@@ -63,7 +74,9 @@ class ProjectCategory(BaseModel, ReprMixin):
         Boolean,
         nullable=False,
         default=True,
-        server_default=text("true"),
+        server_default=text(
+            "true",
+        ),
         index=True,
     )
 
@@ -71,7 +84,9 @@ class ProjectCategory(BaseModel, ReprMixin):
         Integer,
         nullable=False,
         default=0,
-        server_default=text("0"),
+        server_default=text(
+            "0",
+        ),
     )
 
     seo_title: Mapped[str | None] = mapped_column(
@@ -87,7 +102,7 @@ class ProjectCategory(BaseModel, ReprMixin):
     projects: Mapped[list[Project]] = relationship(
         "Project",
         back_populates="category",
-        lazy="selectin",
+        lazy="noload",
         passive_deletes=True,
         order_by="Project.sort_order",
     )
@@ -102,15 +117,15 @@ class ProjectCategory(BaseModel, ReprMixin):
             name="project_categories_slug_not_blank",
         ),
         CheckConstraint(
-            "description IS NULL OR length(btrim(description)) > 0",
+            ("description IS NULL OR length(btrim(description)) > 0"),
             name="project_categories_description_not_blank",
         ),
         CheckConstraint(
-            "icon IS NULL OR length(btrim(icon)) > 0",
+            ("icon IS NULL OR length(btrim(icon)) > 0"),
             name="project_categories_icon_not_blank",
         ),
         CheckConstraint(
-            "color IS NULL OR color ~ '^#[0-9A-Fa-f]{6}$'",
+            ("color IS NULL OR color ~ '^#[0-9A-Fa-f]{6}$'"),
             name="project_categories_color_hex_format",
         ),
         CheckConstraint(
@@ -118,7 +133,7 @@ class ProjectCategory(BaseModel, ReprMixin):
             name="project_categories_sort_order_non_negative",
         ),
         CheckConstraint(
-            "seo_title IS NULL OR length(btrim(seo_title)) > 0",
+            ("seo_title IS NULL OR length(btrim(seo_title)) > 0"),
             name="project_categories_seo_title_not_blank",
         ),
         CheckConstraint(
@@ -130,7 +145,9 @@ class ProjectCategory(BaseModel, ReprMixin):
             "is_active",
             "sort_order",
             "name",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text(
+                "deleted_at IS NULL",
+            ),
         ),
     )
 

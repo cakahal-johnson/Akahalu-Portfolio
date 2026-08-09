@@ -11,6 +11,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import noload
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.project import Project
@@ -39,12 +40,23 @@ class ProjectTechnologyRepository(
         """
         Return a project technology by UUID.
 
-        Soft-deleted technologies are excluded unless
-        ``include_deleted`` is enabled.
+        The reverse project-association collection is intentionally
+        suppressed because technology detail and project assignment
+        validation require only technology fields.
         """
 
-        statement = select(ProjectTechnology).where(
-            ProjectTechnology.id == technology_id,
+        statement = (
+            select(
+                ProjectTechnology,
+            )
+            .where(
+                ProjectTechnology.id == technology_id,
+            )
+            .options(
+                noload(
+                    ProjectTechnology.project_associations,
+                ),
+            )
         )
 
         if not include_deleted:
@@ -52,7 +64,9 @@ class ProjectTechnologyRepository(
                 ProjectTechnology.deleted_at.is_(None),
             )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.scalar_one_or_none()
 
@@ -66,14 +80,25 @@ class ProjectTechnologyRepository(
         """
         Return a project technology by its normalized slug.
 
-        Soft-deleted technologies are excluded unless
-        ``include_deleted`` is enabled.
+        The reverse project-association collection is intentionally
+        suppressed because it is not part of the technology response
+        contract.
         """
 
         normalized_slug = slug.strip().lower()
 
-        statement = select(ProjectTechnology).where(
-            ProjectTechnology.slug == normalized_slug,
+        statement = (
+            select(
+                ProjectTechnology,
+            )
+            .where(
+                ProjectTechnology.slug == normalized_slug,
+            )
+            .options(
+                noload(
+                    ProjectTechnology.project_associations,
+                ),
+            )
         )
 
         if not include_deleted:
@@ -81,7 +106,9 @@ class ProjectTechnologyRepository(
                 ProjectTechnology.deleted_at.is_(None),
             )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.scalar_one_or_none()
 
@@ -114,8 +141,15 @@ class ProjectTechnologyRepository(
             )
 
         statement = (
-            select(ProjectTechnology)
+            select(
+                ProjectTechnology,
+            )
             .where(*filters)
+            .options(
+                noload(
+                    ProjectTechnology.project_associations,
+                ),
+            )
             .order_by(
                 ProjectTechnology.category.asc(),
                 ProjectTechnology.sort_order.asc(),
@@ -224,8 +258,15 @@ class ProjectTechnologyRepository(
         )
 
         statement = (
-            select(ProjectTechnology)
+            select(
+                ProjectTechnology,
+            )
             .where(*filters)
+            .options(
+                noload(
+                    ProjectTechnology.project_associations,
+                ),
+            )
             .order_by(
                 sort_expression,
                 ProjectTechnology.id.asc(),
