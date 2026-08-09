@@ -26,3 +26,7 @@ export {
 export {
   adminTechnologyService,
 } from "@/services/admin/technology-service"
+
+export {
+  adminUserService,
+} from "./user-service"

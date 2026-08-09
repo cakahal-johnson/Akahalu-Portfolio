@@ -118,6 +118,6 @@ export const adminNavigation: AdminNavigationItem[] = [
       Users,
 
     permission:
-      "users.read",
+      "users.manage",
   },
 ]
