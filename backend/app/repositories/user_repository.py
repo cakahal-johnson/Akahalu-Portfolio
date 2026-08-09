@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy import Select, asc, desc, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import raiseload, selectinload
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.associations import user_roles
@@ -16,15 +16,41 @@ class UserRepository(
     BaseRepository[User],
 ):
     def __init__(self) -> None:
-        super().__init__(User)
+        super().__init__(
+            User,
+        )
 
     @staticmethod
     def _with_roles(
         statement: Select[tuple[User]],
     ) -> Select[tuple[User]]:
+        """
+        Load only the authorization information required by callers.
+
+        User has several model-level selectin relationships for account
+        lifecycle data. Those relationships must not be loaded when a
+        caller only needs the user's roles and their permissions.
+
+        The permitted graph is:
+
+        User
+            -> Roles
+                -> Permissions
+
+        All unrelated relationships are explicitly blocked.
+        """
+
         return statement.options(
-            selectinload(User.roles).selectinload(
-                Role.permissions,
+            raiseload("*"),
+            selectinload(
+                User.roles,
+            ).options(
+                raiseload("*"),
+                selectinload(
+                    Role.permissions,
+                ).options(
+                    raiseload("*"),
+                ),
             ),
         )
 
@@ -34,13 +60,17 @@ class UserRepository(
         email: str,
     ) -> User | None:
         statement = self._with_roles(
-            select(User).where(
+            select(
+                User,
+            ).where(
                 User.email == email,
                 User.deleted_at.is_(None),
             )
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
         return result.scalar_one_or_none()
 
@@ -51,7 +81,9 @@ class UserRepository(
         *,
         include_deleted: bool = False,
     ) -> User | None:
-        statement = select(User).where(
+        statement = select(
+            User,
+        ).where(
             User.id == user_id,
         )
 
@@ -61,7 +93,9 @@ class UserRepository(
             )
 
         result = await session.execute(
-            self._with_roles(statement),
+            self._with_roles(
+                statement,
+            ),
         )
 
         return result.scalar_one_or_none()
@@ -79,7 +113,10 @@ class UserRepository(
         include_deleted: bool = False,
         sort_by: str = "created_at",
         sort_direction: str = "desc",
-    ) -> tuple[Sequence[User], int]:
+    ) -> tuple[
+        Sequence[User],
+        int,
+    ]:
         filters: list[ColumnElement[bool]] = []
 
         if not include_deleted:
@@ -94,26 +131,40 @@ class UserRepository(
 
             filters.append(
                 or_(
-                    User.email.ilike(search_pattern),
-                    User.first_name.ilike(search_pattern),
-                    User.last_name.ilike(search_pattern),
-                    User.display_name.ilike(search_pattern),
+                    User.email.ilike(
+                        search_pattern,
+                    ),
+                    User.first_name.ilike(
+                        search_pattern,
+                    ),
+                    User.last_name.ilike(
+                        search_pattern,
+                    ),
+                    User.display_name.ilike(
+                        search_pattern,
+                    ),
                 )
             )
 
         if is_active is not None:
             filters.append(
-                User.is_active.is_(is_active),
+                User.is_active.is_(
+                    is_active,
+                ),
             )
 
         if is_verified is not None:
             filters.append(
-                User.is_verified.is_(is_verified),
+                User.is_verified.is_(
+                    is_verified,
+                ),
             )
 
         if is_superuser is not None:
             filters.append(
-                User.is_superuser.is_(is_superuser),
+                User.is_superuser.is_(
+                    is_superuser,
+                ),
             )
 
         sort_columns = {
@@ -130,12 +181,22 @@ class UserRepository(
         )
 
         sort_expression = (
-            asc(sort_column) if sort_direction.lower() == "asc" else desc(sort_column)
+            asc(
+                sort_column,
+            )
+            if sort_direction.lower() == "asc"
+            else desc(
+                sort_column,
+            )
         )
 
         count_statement = select(
-            func.count(User.id),
-        ).where(*filters)
+            func.count(
+                User.id,
+            ),
+        ).where(
+            *filters,
+        )
 
         total_result = await session.execute(
             count_statement,
@@ -146,21 +207,34 @@ class UserRepository(
         )
 
         statement = (
-            select(User)
-            .where(*filters)
+            select(
+                User,
+            )
+            .where(
+                *filters,
+            )
             .order_by(
                 sort_expression,
                 User.id.asc(),
             )
-            .offset(offset)
-            .limit(limit)
+            .offset(
+                offset,
+            )
+            .limit(
+                limit,
+            )
         )
 
         result = await session.execute(
-            self._with_roles(statement),
+            self._with_roles(
+                statement,
+            ),
         )
 
-        return result.scalars().unique().all(), total
+        return (
+            result.scalars().unique().all(),
+            total,
+        )
 
     async def has_other_active_administrator(
         self,
@@ -169,8 +243,12 @@ class UserRepository(
         excluded_user_id: UUID,
     ) -> bool:
         super_admin_assignment_exists = exists(
-            select(1)
-            .select_from(user_roles)
+            select(
+                1,
+            )
+            .select_from(
+                user_roles,
+            )
             .join(
                 Role,
                 Role.id == user_roles.c.role_id,
@@ -178,26 +256,40 @@ class UserRepository(
             .where(
                 user_roles.c.user_id == User.id,
                 Role.name == "super_admin",
-                Role.is_active.is_(True),
-                Role.deleted_at.is_(None),
+                Role.is_active.is_(
+                    True,
+                ),
+                Role.deleted_at.is_(
+                    None,
+                ),
             )
         )
 
         statement = select(
             exists().where(
                 User.id != excluded_user_id,
-                User.is_active.is_(True),
-                User.deleted_at.is_(None),
+                User.is_active.is_(
+                    True,
+                ),
+                User.deleted_at.is_(
+                    None,
+                ),
                 or_(
-                    User.is_superuser.is_(True),
+                    User.is_superuser.is_(
+                        True,
+                    ),
                     super_admin_assignment_exists,
                 ),
             )
         )
 
-        result = await session.execute(statement)
+        result = await session.execute(
+            statement,
+        )
 
-        return bool(result.scalar_one())
+        return bool(
+            result.scalar_one(),
+        )
 
 
 user_repository = UserRepository()
