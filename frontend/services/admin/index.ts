@@ -14,3 +14,7 @@ export {
 export {
   adminProjectService,
 } from "@/services/admin/project-service"
+
+export {
+  adminTechnologyService,
+} from "@/services/admin/technology-service"
