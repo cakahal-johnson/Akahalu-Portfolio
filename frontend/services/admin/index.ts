@@ -4,6 +4,10 @@ export {
 } from "@/services/admin/client"
 
 export {
+  adminCategoryService,
+} from "@/services/admin/category-service"
+
+export {
   adminProfileService,
 } from "@/services/admin/profile-service"
 
