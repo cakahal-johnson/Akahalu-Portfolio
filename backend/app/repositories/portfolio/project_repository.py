@@ -12,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import (
+    noload,
     selectinload,
     with_loader_criteria,
 )
@@ -475,6 +476,19 @@ class ProjectRepository(
 
         Administrative listings can filter by project state,
         visibility, category, technology, and featured status.
+
+        The listing intentionally suppresses ORM relationship branches
+        that are not part of the administrative response contract.
+
+        Audit ownership is represented by ``created_by_id`` and
+        ``updated_by_id`` on ProjectAdminRead, so full User objects are
+        not loaded.
+
+        Technology summaries are required, but the reverse
+        ProjectTechnology -> project_associations relationship and the
+        ProjectTechnologyAssociation -> project relationship are not.
+        Suppressing those reverse branches prevents SQLAlchemy from
+        recursively expanding the project/technology graph.
         """
 
         filters: list[ColumnElement[bool]] = []
@@ -588,16 +602,37 @@ class ProjectRepository(
             total_result.scalar_one(),
         )
 
+        technology_loader = selectinload(
+            Project.technology_associations,
+        ).options(
+            noload(
+                ProjectTechnologyAssociation.project,
+            ),
+            selectinload(
+                ProjectTechnologyAssociation.technology,
+            ).options(
+                noload(
+                    ProjectTechnology.project_associations,
+                ),
+            ),
+        )
+
         statement = (
             select(Project)
             .where(*filters)
             .options(
-                selectinload(Project.media),
-                selectinload(Project.links),
                 selectinload(
-                    Project.technology_associations,
-                ).selectinload(
-                    ProjectTechnologyAssociation.technology,
+                    Project.media,
+                ),
+                selectinload(
+                    Project.links,
+                ),
+                technology_loader,
+                noload(
+                    Project.created_by,
+                ),
+                noload(
+                    Project.updated_by,
                 ),
             )
             .order_by(
