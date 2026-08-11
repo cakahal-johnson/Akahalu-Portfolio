@@ -1,7 +1,7 @@
 import { ApiError } from "@/lib/api"
 import {
   serverPortfolioService,
-} from "@/services/portfolio"
+} from "@/services/portfolio/server-service"
 
 import type {
   ExperienceSummary,

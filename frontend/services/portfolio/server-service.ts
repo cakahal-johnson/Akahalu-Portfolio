@@ -1,3 +1,4 @@
+import "server-only"
 import { apiEndpoints } from "@/lib/api"
 import { serverApiGet } from "@/lib/api/server"
 

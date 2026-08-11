@@ -1,3 +1,10 @@
+# ============================================================
+# Akahalu Portfolio — Local Development Infrastructure
+#
+# This compose file is intentionally for LOCAL DEVELOPMENT.
+# Production deployment will use a separate compose file.
+# ============================================================
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -10,7 +17,7 @@ services:
       POSTGRES_PASSWORD: portfolio_password
 
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
     volumes:
       - portfolio_postgres_data:/var/lib/postgresql/data
@@ -43,7 +50,7 @@ services:
       - portfolio_redis_password
 
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
 
     volumes:
       - portfolio_redis_data:/data

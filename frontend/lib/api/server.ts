@@ -1,78 +1,125 @@
-import { env } from "@/config/env"
-import { ApiError } from "@/lib/api/errors"
+import "server-only"
+import {
+  serverEnv,
+} from "@/config/server-env"
+
+import {
+  ApiError,
+} from "@/lib/api/errors"
 
 type ServerApiRequestOptions = {
   signal?: AbortSignal
   next?: NextFetchRequestConfig
 }
 
-export async function serverApiGet<TResponse>(
+export async function serverApiGet<
+  TResponse,
+>(
   endpoint: string,
-  options: ServerApiRequestOptions = {}
+  options:
+    ServerApiRequestOptions = {}
 ): Promise<TResponse> {
-  const url = new URL(
-    endpoint.replace(/^\/+/, ""),
-    `${env.apiUrl}/`
-  )
+  const url =
+    new URL(
+      endpoint.replace(
+        /^\/+/,
+        ""
+      ),
+      `${serverEnv.apiUrl}/`
+    )
 
-  const response = await fetch(url, {
-    method: "GET",
+  const response =
+    await fetch(
+      url,
+      {
+        method:
+          "GET",
 
-    headers: {
-      Accept: "application/json",
-    },
+        headers: {
+          Accept:
+            "application/json",
+        },
 
-    signal: options.signal,
+        signal:
+          options.signal,
 
-    next: options.next ?? {
-      revalidate: 60,
-    },
-  })
+        next:
+          options.next ?? {
+            revalidate:
+              60,
+          },
+      }
+    )
 
-  if (!response.ok) {
-    let body: unknown = null
+  if (
+    !response.ok
+  ) {
+    let body:
+      unknown =
+      null
 
     try {
-      body = await response.json()
+      body =
+        await response.json()
     } catch {
-      body = null
+      body =
+        null
     }
 
-    let message = response.statusText
-    let code: string | null = null
+    let message =
+      response.statusText
+
+    let code:
+      string |
+      null =
+      null
 
     if (
-      typeof body === "object" &&
-      body !== null &&
+      typeof body ===
+        "object" &&
+      body !==
+        null &&
       "detail" in body
     ) {
-      const detail = (
-        body as {
-          detail?: unknown
-        }
-      ).detail
+      const detail =
+        (
+          body as {
+            detail?:
+              unknown
+          }
+        ).detail
 
       if (
-        typeof detail === "object" &&
-        detail !== null
+        typeof detail ===
+          "object" &&
+        detail !==
+          null
       ) {
         if (
-          "message" in detail &&
-          typeof detail.message === "string"
+          "message" in
+            detail &&
+          typeof detail.message ===
+            "string"
         ) {
-          message = detail.message
+          message =
+            detail.message
         }
 
         if (
-          "code" in detail &&
-          typeof detail.code === "string"
+          "code" in
+            detail &&
+          typeof detail.code ===
+            "string"
         ) {
-          code = detail.code
+          code =
+            detail.code
         }
       } else if (
-        typeof detail === "string"
+        typeof detail ===
+        "string"
       ) {
-        message = detail
+        message =
+          detail
       }
     }
 
@@ -81,10 +128,14 @@ export async function serverApiGet<TResponse>(
         message ||
         "The API request failed.",
 
-      status: response.status,
+      status:
+        response.status,
+
       code,
     })
   }
 
-  return response.json() as Promise<TResponse>
+  return (
+    response.json()
+  ) as Promise<TResponse>
 }

@@ -2,7 +2,11 @@ import "server-only"
 
 import { NextResponse } from "next/server"
 
-import { env } from "@/config/env"
+// import { env } from "@/config/env"
+import {
+  serverEnv,
+} from "@/config/server-env"
+
 import {
   ADMIN_ACCESS_TOKEN_COOKIE,
   ADMIN_REFRESH_TOKEN_COOKIE,
@@ -24,7 +28,7 @@ type BackendError = {
 function buildBackendUrl(
   path: string
 ): string {
-  return `${env.apiUrl}${path}`
+  return `${serverEnv.apiUrl}${path}`
 }
 
 export async function parseBackendError(
