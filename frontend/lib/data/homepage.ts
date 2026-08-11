@@ -26,7 +26,11 @@ async function loadProfile(): Promise<ProfileRead | null> {
       return null
     }
 
-    throw error
+    console.warn(
+      "[portfolio] Public profile is unavailable; using homepage fallback content."
+    )
+
+    return null
   }
 }
 

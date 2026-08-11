@@ -1,11 +1,16 @@
 import { ApiError } from "@/lib/api"
+
 import {
   serverPortfolioService,
 } from "@/services/portfolio/server-service"
 
-import type { ProfileRead } from "@/types/portfolio"
+import type {
+  ProfileRead,
+} from "@/types/portfolio"
 
-export async function getPublicProfile(): Promise<ProfileRead | null> {
+export async function getPublicProfile(): Promise<
+  ProfileRead | null
+> {
   try {
     return await serverPortfolioService.getProfile()
   } catch (error) {
@@ -16,6 +21,10 @@ export async function getPublicProfile(): Promise<ProfileRead | null> {
       return null
     }
 
-    throw error
+    console.warn(
+      "[portfolio] Public profile is unavailable; using the unavailable-profile fallback."
+    )
+
+    return null
   }
 }
