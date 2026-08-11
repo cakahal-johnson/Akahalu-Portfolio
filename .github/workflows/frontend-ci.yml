@@ -1,0 +1,87 @@
+name: Frontend CI
+
+on:
+  push:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+  pull_request:
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend quality and build
+
+    runs-on: ubuntu-24.04
+
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    env:
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:8000/api/v1
+      NEXT_PUBLIC_API_TIMEOUT_MS: "15000"
+
+      BACKEND_API_URL: http://127.0.0.1:8000/api/v1
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@c9883cc79df532ad1a7b81bf9ab944ceb090d65c # v2.0.0
+
+        with:
+          package-json-file: frontend/package.json
+          runtime: node@22.21.0
+          cache: true
+          cache-dependency-path: frontend/pnpm-lock.yaml
+          install: false
+
+      - name: Show tool versions
+        run: |
+          node --version
+          pnpm --version
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Run TypeScript
+        run: pnpm exec tsc --noEmit
+
+      - name: Build Next.js production application
+        run: pnpm build
+
+      - name: Verify standalone output
+        shell: bash
+
+        run: |
+          set -euo pipefail
+
+          if [ ! -d ".next/standalone" ]; then
+            echo "Next.js standalone output was not generated."
+            exit 1
+          fi
+
+          echo "Next.js standalone output verified."
