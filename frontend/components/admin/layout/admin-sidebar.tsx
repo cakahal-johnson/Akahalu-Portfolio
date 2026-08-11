@@ -3,27 +3,54 @@
 import {
   ExternalLink,
 } from "lucide-react"
+
 import Link from "next/link"
+
 import {
   usePathname,
 } from "next/navigation"
 
-import { useAdminSession } from "@/components/admin/auth/admin-session-context"
-import { adminNavigation } from "@/config/admin-navigation"
-import { siteConfig } from "@/config/site"
-import { userHasPermission } from "@/lib/auth/permissions"
-import { cn } from "@/lib/utils"
+import {
+  AdminLogoutButton,
+} from "@/components/admin/auth/admin-logout-button"
+
+import {
+  useAdminSession,
+} from "@/components/admin/auth/admin-session-context"
+
+import {
+  adminNavigation,
+} from "@/config/admin-navigation"
+
+import {
+  siteConfig,
+} from "@/config/site"
+
+import {
+  userHasPermission,
+} from "@/lib/auth/permissions"
+
+import {
+  cn,
+} from "@/lib/utils"
 
 function isActiveRoute(
   pathname: string,
   href: string
 ): boolean {
-  if (href === "/admin") {
-    return pathname === href
+  if (
+    href ===
+    "/admin"
+  ) {
+    return (
+      pathname ===
+      href
+    )
   }
 
   return (
-    pathname === href ||
+    pathname ===
+      href ||
     pathname.startsWith(
       `${href}/`
     )
@@ -34,12 +61,16 @@ export function AdminSidebar() {
   const pathname =
     usePathname()
 
-  const { user } =
+  const {
+    user,
+  } =
     useAdminSession()
 
   const navigation =
     adminNavigation.filter(
-      (item) => {
+      (
+        item
+      ) => {
         if (
           item.superuserOnly &&
           !user.is_superuser
@@ -47,7 +78,9 @@ export function AdminSidebar() {
           return false
         }
 
-        if (!item.permission) {
+        if (
+          !item.permission
+        ) {
           return true
         }
 
@@ -78,7 +111,9 @@ export function AdminSidebar() {
       <nav className="flex-1 overflow-y-auto p-4">
         <div className="space-y-1">
           {navigation.map(
-            (item) => {
+            (
+              item
+            ) => {
               const active =
                 isActiveRoute(
                   pathname,
@@ -95,6 +130,11 @@ export function AdminSidebar() {
                   }
                   href={
                     item.href
+                  }
+                  aria-current={
+                    active
+                      ? "page"
+                      : undefined
                   }
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
@@ -117,18 +157,23 @@ export function AdminSidebar() {
       </nav>
 
       <div className="border-t border-border p-4">
-        <Link
-          href="/"
-          target="_blank"
-          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ExternalLink
-            className="size-4"
-            aria-hidden="true"
-          />
+        <div className="space-y-1">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ExternalLink
+              className="size-4"
+              aria-hidden="true"
+            />
 
-          View portfolio
-        </Link>
+            View portfolio
+          </Link>
+
+          <AdminLogoutButton />
+        </div>
       </div>
     </aside>
   )

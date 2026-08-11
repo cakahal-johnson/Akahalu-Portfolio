@@ -1,3 +1,11 @@
+import {
+  ADMIN_LOGIN_PATH,
+} from "@/lib/auth/constants"
+
+import {
+  adminAuthenticationService,
+} from "@/services/authentication"
+
 type AdminErrorBody = {
   detail?:
     | string
@@ -23,13 +31,18 @@ export class AdminApiError extends Error {
       code?: string | null
     }
   ) {
-    super(message)
+    super(
+      message
+    )
 
     this.name =
       "AdminApiError"
 
-    this.status = status
-    this.code = code
+    this.status =
+      status
+
+    this.code =
+      code
   }
 }
 
@@ -44,7 +57,8 @@ async function parseAdminError(
     payload =
       (await response.json()) as AdminErrorBody
   } catch {
-    payload = null
+    payload =
+      null
   }
 
   const detail =
@@ -70,8 +84,112 @@ async function parseAdminError(
     {
       status:
         response.status,
+
       code,
     }
+  )
+}
+
+async function performAdminRequest(
+  url: string,
+  init?: RequestInit
+): Promise<Response> {
+  const headers =
+    new Headers(
+      init?.headers
+    )
+
+  if (
+    !headers.has(
+      "Accept"
+    )
+  ) {
+    headers.set(
+      "Accept",
+      "application/json"
+    )
+  }
+
+  if (
+    init?.body &&
+    !headers.has(
+      "Content-Type"
+    )
+  ) {
+    headers.set(
+      "Content-Type",
+      "application/json"
+    )
+  }
+
+  try {
+    return await fetch(
+      url,
+      {
+        ...init,
+
+        credentials:
+          "same-origin",
+
+        headers,
+
+        cache:
+          "no-store",
+      }
+    )
+  } catch {
+    throw new AdminApiError(
+      "The administration service could not be reached.",
+      {
+        status:
+          0,
+
+        code:
+          "network_error",
+      }
+    )
+  }
+}
+
+let refreshPromise:
+  Promise<void> |
+  null =
+  null
+
+function refreshAdminSessionOnce(): Promise<void> {
+  if (
+    refreshPromise
+  ) {
+    return refreshPromise
+  }
+
+  refreshPromise =
+    adminAuthenticationService
+      .refresh()
+      .then(
+        () =>
+          undefined
+      )
+      .finally(
+        () => {
+          refreshPromise =
+            null
+        }
+      )
+
+  return refreshPromise
+}
+
+function redirectToLogin(): void {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+    return
+  }
+
+  window.location.assign(
+    ADMIN_LOGIN_PATH
   )
 }
 
@@ -81,53 +199,72 @@ export async function adminRequest<
   url: string,
   init?: RequestInit
 ): Promise<TResponse> {
-  let response: Response
+  let response =
+    await performAdminRequest(
+      url,
+      init
+    )
 
-  try {
-    response =
-      await fetch(
-        url,
+  if (
+    response.status ===
+    401
+  ) {
+    try {
+      /*
+       * All concurrent admin requests in this
+       * browser runtime share the same promise.
+       * Only one refresh request is therefore
+       * sent while the others wait.
+       */
+      await refreshAdminSessionOnce()
+    } catch {
+      redirectToLogin()
+
+      throw new AdminApiError(
+        "Your administrator session has expired. Please sign in again.",
         {
-          ...init,
+          status:
+            401,
 
-          credentials:
-            "same-origin",
-
-          headers: {
-            Accept:
-              "application/json",
-
-            ...(init?.body
-              ? {
-                  "Content-Type":
-                    "application/json",
-                }
-              : {}),
-
-            ...(init?.headers ??
-              {}),
-          },
-
-          cache:
-            "no-store",
+          code:
+            "authentication_required",
         }
       )
-  } catch {
-    throw new AdminApiError(
-      "The administration service could not be reached.",
-      {
-        status: 0,
-        code:
-          "network_error",
-      }
-    )
+    }
+
+    response =
+      await performAdminRequest(
+        url,
+        init
+      )
   }
 
-  if (!response.ok) {
-    throw await parseAdminError(
-      response
-    )
+  if (
+    !response.ok
+  ) {
+    const error =
+      await parseAdminError(
+        response
+      )
+
+    if (
+      error.status ===
+      401
+    ) {
+      redirectToLogin()
+    }
+
+    throw error
   }
 
-  return (await response.json()) as TResponse
+  if (
+    response.status ===
+    204
+  ) {
+    return undefined as TResponse
+  }
+
+  return (
+    await response.json()
+  ) as TResponse
 }

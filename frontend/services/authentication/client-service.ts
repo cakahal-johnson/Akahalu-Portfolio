@@ -18,13 +18,18 @@ export class AdminAuthenticationError extends Error {
       code?: string | null
     }
   ) {
-    super(message)
+    super(
+      message
+    )
 
     this.name =
       "AdminAuthenticationError"
 
-    this.status = status
-    this.code = code
+    this.status =
+      status
+
+    this.code =
+      code
   }
 }
 
@@ -39,7 +44,8 @@ async function parseError(
     body =
       (await response.json()) as AuthenticationErrorBody
   } catch {
-    body = null
+    body =
+      null
   }
 
   return new AdminAuthenticationError(
@@ -49,6 +55,7 @@ async function parseError(
     {
       status:
         response.status,
+
       code:
         body?.detail?.code ??
         null,
@@ -60,59 +67,78 @@ async function requestSession(
   input: RequestInfo | URL,
   init?: RequestInit
 ): Promise<AdminSessionResponse> {
-  let response: Response
+  let response:
+    Response
 
   try {
-    response = await fetch(
-      input,
-      {
-        ...init,
-        credentials:
-          "same-origin",
-        headers: {
-          Accept:
-            "application/json",
-          ...(init?.headers ??
-            {}),
-        },
-      }
-    )
+    response =
+      await fetch(
+        input,
+        {
+          ...init,
+
+          credentials:
+            "same-origin",
+
+          headers: {
+            Accept:
+              "application/json",
+
+            ...(init?.headers ??
+              {}),
+          },
+
+          cache:
+            "no-store",
+        }
+      )
   } catch {
     throw new AdminAuthenticationError(
       "The authentication service could not be reached.",
       {
-        status: 0,
+        status:
+          0,
+
         code:
           "network_error",
       }
     )
   }
 
-  if (!response.ok) {
+  if (
+    !response.ok
+  ) {
     throw await parseError(
       response
     )
   }
 
-  return (await response.json()) as AdminSessionResponse
+  return (
+    await response.json()
+  ) as AdminSessionResponse
 }
 
 export const adminAuthenticationService =
   {
     login(
-      payload: AdminLoginRequest
+      payload:
+        AdminLoginRequest
     ): Promise<AdminSessionResponse> {
       return requestSession(
         "/api/admin-auth/login",
         {
-          method: "POST",
+          method:
+            "POST",
+
           headers: {
             "Content-Type":
               "application/json",
           },
-          body: JSON.stringify(
-            payload
-          ),
+
+          body:
+            JSON.stringify(
+              payload
+            ),
         }
       )
     },
@@ -121,8 +147,8 @@ export const adminAuthenticationService =
       return requestSession(
         "/api/admin-auth/session",
         {
-          method: "GET",
-          cache: "no-store",
+          method:
+            "GET",
         }
       )
     },
@@ -131,19 +157,50 @@ export const adminAuthenticationService =
       return requestSession(
         "/api/admin-auth/refresh",
         {
-          method: "POST",
+          method:
+            "POST",
         }
       )
     },
 
     async logout(): Promise<void> {
-      await fetch(
-        "/api/admin-auth/logout",
-        {
-          method: "POST",
-          credentials:
-            "same-origin",
-        }
-      )
+      let response:
+        Response
+
+      try {
+        response =
+          await fetch(
+            "/api/admin-auth/logout",
+            {
+              method:
+                "POST",
+
+              credentials:
+                "same-origin",
+
+              cache:
+                "no-store",
+            }
+          )
+      } catch {
+        throw new AdminAuthenticationError(
+          "The authentication service could not be reached.",
+          {
+            status:
+              0,
+
+            code:
+              "network_error",
+          }
+        )
+      }
+
+      if (
+        !response.ok
+      ) {
+        throw await parseError(
+          response
+        )
+      }
     },
   } as const

@@ -1,55 +1,25 @@
 "use client"
 
 import {
-  LogOut,
-} from "lucide-react"
-import {
-  useRouter,
-} from "next/navigation"
-import {
-  useState,
-} from "react"
+  AdminLogoutButton,
+} from "@/components/admin/auth/admin-logout-button"
 
-import { useAdminSession } from "@/components/admin/auth/admin-session-context"
-import { Button } from "@/components/ui/button"
 import {
-  ADMIN_LOGIN_PATH,
-} from "@/lib/auth/constants"
-import { adminAuthenticationService } from "@/services/authentication"
+  useAdminSession,
+} from "@/components/admin/auth/admin-session-context"
 
 export function AdminUserMenu() {
-  const router =
-    useRouter()
-
-  const { user } =
+  const {
+    user,
+  } =
     useAdminSession()
 
-  const [
-    loggingOut,
-    setLoggingOut,
-  ] = useState(false)
-
-  async function logout() {
-    if (loggingOut) {
-      return
-    }
-
-    try {
-      setLoggingOut(true)
-
-      await adminAuthenticationService.logout()
-    } finally {
-      router.replace(
-        ADMIN_LOGIN_PATH
-      )
-
-      router.refresh()
-    }
-  }
-
   const initials =
-    `${user.first_name.charAt(0)}${user.last_name.charAt(0)}`
-      .toUpperCase()
+    `${user.first_name.charAt(
+      0
+    )}${user.last_name.charAt(
+      0
+    )}`.toUpperCase()
 
   return (
     <div className="flex items-center gap-3">
@@ -68,19 +38,9 @@ export function AdminUserMenu() {
         {initials}
       </div>
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={logout}
-        disabled={loggingOut}
-        aria-label="Sign out"
-      >
-        <LogOut
-          className="size-4"
-          aria-hidden="true"
-        />
-      </Button>
+      <AdminLogoutButton
+        compact
+      />
     </div>
   )
 }

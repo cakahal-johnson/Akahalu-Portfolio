@@ -13,9 +13,6 @@ import {
 import {
   buildBackendUrl,
   clearAuthenticationCookies,
-  isAdministrativeUser,
-  refreshBackendSession,
-  setAuthenticationCookies,
 } from "@/lib/auth/server"
 
 type AdminProxyOptions = {
@@ -33,11 +30,18 @@ function authenticationRequiredResponse(
         detail: {
           code:
             "authentication_required",
+
           message,
         },
       },
       {
-        status: 401,
+        status:
+          401,
+
+        headers: {
+          "Cache-Control":
+            "no-store",
+        },
       }
     )
 
@@ -48,18 +52,48 @@ function authenticationRequiredResponse(
   return response
 }
 
+function refreshRequiredResponse(): NextResponse {
+  return NextResponse.json(
+    {
+      detail: {
+        code:
+          "access_token_refresh_required",
+
+        message:
+          "The administrator access token must be refreshed.",
+      },
+    },
+    {
+      status:
+        401,
+
+      headers: {
+        "Cache-Control":
+          "no-store",
+      },
+    }
+  )
+}
+
 function backendUnavailableResponse(): NextResponse {
   return NextResponse.json(
     {
       detail: {
         code:
           "backend_unavailable",
+
         message:
           "The administration service is currently unavailable.",
       },
     },
     {
-      status: 503,
+      status:
+        503,
+
+      headers: {
+        "Cache-Control":
+          "no-store",
+      },
     }
   )
 }
@@ -108,6 +142,7 @@ async function callBackend(
     new Headers({
       Accept:
         "application/json",
+
       Authorization:
         `Bearer ${accessToken}`,
     })
@@ -132,14 +167,20 @@ async function callBackend(
   }
 
   return fetch(
-    buildBackendUrl(path),
+    buildBackendUrl(
+      path
+    ),
     {
       method:
         options.method ??
         "GET",
+
       headers,
+
       body,
-      cache: "no-store",
+
+      cache:
+        "no-store",
     }
   )
 }
@@ -159,64 +200,37 @@ export async function proxyAuthenticatedAdminRequest(
       ADMIN_REFRESH_TOKEN_COOKIE
     )?.value
 
-  let backendResponse:
-    | Response
-    | null = null
+  /*
+   * Refresh-token rotation is intentionally
+   * NOT performed here.
+   *
+   * Several admin requests may run in parallel.
+   * If each BFF handler independently attempted
+   * to rotate the same refresh token, legitimate
+   * concurrent requests could trigger backend
+   * refresh-token reuse protection.
+   *
+   * Client-side adminRequest() serializes refresh
+   * into one shared refresh operation and retries
+   * the original requests afterwards.
+   */
 
-  if (accessToken) {
-    try {
-      backendResponse =
-        await callBackend(
-          path,
-          accessToken,
-          options
-        )
-    } catch {
-      return backendUnavailableResponse()
+  if (!accessToken) {
+    if (refreshToken) {
+      return refreshRequiredResponse()
     }
 
-    if (
-      backendResponse.status !==
-      401
-    ) {
-      return forwardBackendResponse(
-        backendResponse
-      )
-    }
-  }
-
-  if (!refreshToken) {
     return authenticationRequiredResponse()
   }
 
-  let refreshed
-
-  try {
-    refreshed =
-      await refreshBackendSession(
-        refreshToken
-      )
-  } catch {
-    return backendUnavailableResponse()
-  }
-
-  if (
-    !refreshed ||
-    !isAdministrativeUser(
-      refreshed.user
-    )
-  ) {
-    return authenticationRequiredResponse(
-      "Your administrator session has expired. Please sign in again."
-    )
-  }
+  let backendResponse:
+    Response
 
   try {
     backendResponse =
       await callBackend(
         path,
-        refreshed.tokens
-          .access_token,
+        accessToken,
         options
       )
   } catch {
@@ -224,28 +238,19 @@ export async function proxyAuthenticatedAdminRequest(
   }
 
   if (
-    backendResponse.status ===
+    backendResponse.status !==
     401
   ) {
+    return forwardBackendResponse(
+      backendResponse
+    )
+  }
+
+  if (!refreshToken) {
     return authenticationRequiredResponse(
       "Your administrator session is no longer valid. Please sign in again."
     )
   }
 
-  const response =
-    await forwardBackendResponse(
-      backendResponse
-    )
-
-  /*
-   * Refresh tokens rotate on every
-   * successful refresh, so always
-   * replace both cookies.
-   */
-  setAuthenticationCookies(
-    response,
-    refreshed.tokens
-  )
-
-  return response
+  return refreshRequiredResponse()
 }
