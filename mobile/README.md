@@ -21,7 +21,13 @@ Presentation
 Domain
     |
     v
-Data
+Repository
+    |
+    v
+Remote Data Source
+    |
+    v
+ApiClient
     |
     v
 Ktor

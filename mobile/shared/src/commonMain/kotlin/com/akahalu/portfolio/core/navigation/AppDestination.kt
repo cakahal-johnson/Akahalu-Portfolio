@@ -6,6 +6,10 @@ sealed interface AppDestination {
 
     data object Projects : AppDestination
 
+    data class ProjectDetail(
+        val slug: String,
+    ) : AppDestination
+
     data object Experience : AppDestination
 
     data object Contact : AppDestination
