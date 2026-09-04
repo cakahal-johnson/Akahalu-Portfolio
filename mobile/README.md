@@ -13,13 +13,18 @@ The mobile application consumes the existing Akahalu Portfolio FastAPI backend.
 
 ```text
 Compose UI
-    ↓
+    |
+    v
 Presentation
-    ↓
+    |
+    v
 Domain
-    ↓
+    |
+    v
 Data
-    ↓
+    |
+    v
 Ktor
-    ↓
+    |
+    v
 FastAPI /api/v1

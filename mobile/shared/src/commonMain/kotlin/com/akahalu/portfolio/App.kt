@@ -1,31 +1,12 @@
 package com.akahalu.portfolio
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import com.akahalu.portfolio.core.designsystem.theme.AkahaluPortfolioTheme
+import com.akahalu.portfolio.presentation.home.HomeScreen
 
 @Composable
 fun App() {
-    MaterialTheme {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = "Akahalu Portfolio",
-                style = MaterialTheme.typography.headlineMedium,
-            )
-
-            Text(
-                text = "Kotlin Multiplatform + Compose Multiplatform",
-                style = MaterialTheme.typography.bodyLarge,
-            )
-        }
+    AkahaluPortfolioTheme {
+        HomeScreen()
     }
 }
