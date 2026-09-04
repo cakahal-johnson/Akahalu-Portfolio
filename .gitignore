@@ -145,3 +145,14 @@ desktop.ini
 # =============================================================================
 
 infrastructure/production.env
+
+# Kotlin Multiplatform / Gradle / Android
+mobile/.gradle/
+mobile/.kotlin/
+mobile/**/build/
+mobile/**/local.properties
+mobile/.idea/
+mobile/**/.cxx/
+mobile/**/captures/
+mobile/**/.externalNativeBuild/
+mobile/**/*.iml
