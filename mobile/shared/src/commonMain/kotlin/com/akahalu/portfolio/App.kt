@@ -1,13 +1,15 @@
 package com.akahalu.portfolio
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
 import com.akahalu.portfolio.core.di.PortfolioDependencies
 import com.akahalu.portfolio.core.designsystem.theme.AkahaluPortfolioTheme
 import com.akahalu.portfolio.core.navigation.AppDestination
@@ -15,6 +17,7 @@ import com.akahalu.portfolio.core.network.NetworkConfig
 import com.akahalu.portfolio.presentation.home.HomeScreen
 import com.akahalu.portfolio.presentation.portfolio.PortfolioViewModel
 import com.akahalu.portfolio.presentation.projects.ProjectDetailScreen
+import com.akahalu.portfolio.presentation.projects.ProjectDetailViewModel
 import com.akahalu.portfolio.presentation.projects.ProjectsScreen
 
 @Composable
@@ -34,7 +37,7 @@ fun App(
 
         val scope = rememberCoroutineScope()
 
-        val viewModel = remember(
+        val portfolioViewModel = remember(
             dependencies.portfolioRepository,
             scope,
         ) {
@@ -44,7 +47,7 @@ fun App(
             )
         }
 
-        val uiState by viewModel.uiState.collectAsState()
+        val portfolioUiState by portfolioViewModel.uiState.collectAsState()
 
         var destination by remember {
             mutableStateOf<AppDestination>(
@@ -52,14 +55,14 @@ fun App(
             )
         }
 
-        androidx.compose.runtime.LaunchedEffect(viewModel) {
-            viewModel.loadPortfolio()
+        LaunchedEffect(portfolioViewModel) {
+            portfolioViewModel.loadPortfolio()
         }
 
         when (val currentDestination = destination) {
             AppDestination.Home -> {
                 HomeScreen(
-                    uiState = uiState,
+                    uiState = portfolioUiState,
                     onProjectSelected = { slug ->
                         destination = AppDestination.ProjectDetail(slug)
                     },
@@ -68,7 +71,7 @@ fun App(
 
             AppDestination.Projects -> {
                 ProjectsScreen(
-                    uiState = uiState,
+                    uiState = portfolioUiState,
                     onProjectSelected = { slug ->
                         destination = AppDestination.ProjectDetail(slug)
                     },
@@ -76,37 +79,57 @@ fun App(
             }
 
             is AppDestination.ProjectDetail -> {
-                val project = when (val state = uiState) {
-                    is com.akahalu.portfolio.presentation.portfolio.PortfolioUiState.Success ->
-                        state.projectPage.items.firstOrNull {
-                            it.slug == currentDestination.slug
-                        }
-
-                    else -> null
-                }
-
-                if (project != null) {
-                    ProjectDetailScreen(
-                        project = project,
-                    )
-                } else {
-                    androidx.compose.material3.Text(
-                        text = "Project not found.",
-                    )
-                }
+                ProjectDetailRoute(
+                    slug = currentDestination.slug,
+                    repository = dependencies.portfolioRepository,
+                    scope = scope,
+                    onBack = {
+                        destination = AppDestination.Projects
+                    },
+                )
             }
 
             AppDestination.Experience -> {
-                androidx.compose.material3.Text(
+                Text(
                     text = "Experience",
                 )
             }
 
             AppDestination.Contact -> {
-                androidx.compose.material3.Text(
+                Text(
                     text = "Contact",
                 )
             }
         }
     }
+}
+
+@Composable
+private fun ProjectDetailRoute(
+    slug: String,
+    repository: com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository,
+    scope: kotlinx.coroutines.CoroutineScope,
+    onBack: () -> Unit,
+) {
+    val viewModel = remember(
+        repository,
+        scope,
+        slug,
+    ) {
+        ProjectDetailViewModel(
+            repository = repository,
+            scope = scope,
+        )
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(viewModel, slug) {
+        viewModel.loadProject(slug)
+    }
+
+    ProjectDetailScreen(
+        uiState = uiState,
+        onBack = onBack,
+    )
 }
