@@ -2,6 +2,7 @@ package com.akahalu.portfolio.domain.portfolio.repository
 
 import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
+import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
@@ -57,4 +58,6 @@ interface PortfolioRepository {
     suspend fun getExperience(
         slug: String,
     ): Experience
+
+    suspend fun getProfile(): Profile
 }

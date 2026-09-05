@@ -4,6 +4,7 @@ package com.akahalu.portfolio.presentation.projects
 
 import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
+import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectLink
@@ -203,6 +204,10 @@ class ProjectDetailViewModelTest {
             slug: String,
         ): Experience {
             error("Experience is not used by this test.")
+        }
+
+        override suspend fun getProfile(): Profile {
+            error("Not required for ProjectDetailViewModelTest.")
         }
     }
 }

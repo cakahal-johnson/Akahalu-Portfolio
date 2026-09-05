@@ -18,6 +18,9 @@ import com.akahalu.portfolio.core.navigation.AppDestination
 import com.akahalu.portfolio.core.navigation.AppNavigator
 import com.akahalu.portfolio.core.network.NetworkConfig
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
+import com.akahalu.portfolio.presentation.contact.ContactScreen
+import com.akahalu.portfolio.presentation.contact.ContactUiState
+import com.akahalu.portfolio.presentation.contact.ContactViewModel
 import com.akahalu.portfolio.presentation.experience.ExperienceScreen
 import com.akahalu.portfolio.presentation.experience.ExperienceUiState
 import com.akahalu.portfolio.presentation.experience.ExperienceViewModel
@@ -28,7 +31,6 @@ import com.akahalu.portfolio.presentation.projects.ProjectDetailScreen
 import com.akahalu.portfolio.presentation.projects.ProjectDetailViewModel
 import com.akahalu.portfolio.presentation.projects.ProjectsScreen
 import com.akahalu.portfolio.presentation.shell.AppNavigationBar
-import com.akahalu.portfolio.presentation.shell.PlaceholderScreen
 import com.akahalu.portfolio.presentation.skills.SkillsScreen
 import com.akahalu.portfolio.presentation.skills.SkillsUiState
 import com.akahalu.portfolio.presentation.skills.SkillsViewModel
@@ -63,6 +65,10 @@ fun App(
 
         val portfolioUiState by portfolioViewModel.uiState.collectAsState()
 
+        LaunchedEffect(portfolioViewModel) {
+            portfolioViewModel.loadPortfolio()
+        }
+
         val experienceViewModel = remember(
             dependencies.portfolioRepository,
             scope,
@@ -95,16 +101,28 @@ fun App(
             skillsViewModel.loadTechnologies()
         }
 
+        val contactViewModel = remember(
+            dependencies.portfolioRepository,
+            scope,
+        ) {
+            ContactViewModel(
+                repository = dependencies.portfolioRepository,
+                scope = scope,
+            )
+        }
+
+        val contactUiState by contactViewModel.uiState.collectAsState()
+
+        LaunchedEffect(contactViewModel) {
+            contactViewModel.loadProfile()
+        }
+
         val navigator = remember {
             AppNavigator()
         }
 
         val currentDestination by navigator.currentDestination
             .collectAsState()
-
-        LaunchedEffect(portfolioViewModel) {
-            portfolioViewModel.loadPortfolio()
-        }
 
         AppContent(
             destination = currentDestination,
@@ -122,6 +140,7 @@ fun App(
             },
             experienceUiState = experienceUiState,
             skillsUiState = skillsUiState,
+            contactUiState = contactUiState,
         )
     }
 }
@@ -137,6 +156,7 @@ private fun AppContent(
     onBackFromProjectDetail: () -> Unit,
     experienceUiState: ExperienceUiState,
     skillsUiState: SkillsUiState,
+    contactUiState: ContactUiState,
 ) {
     val isDetailDestination =
         destination is AppDestination.ProjectDetail
@@ -193,10 +213,8 @@ private fun AppContent(
                 }
 
                 AppDestination.Contact -> {
-                    PlaceholderScreen(
-                        title = "Contact",
-                        subtitle =
-                            "Contact functionality will be added in a future milestone.",
+                    ContactScreen(
+                        uiState = contactUiState,
                     )
                 }
             }

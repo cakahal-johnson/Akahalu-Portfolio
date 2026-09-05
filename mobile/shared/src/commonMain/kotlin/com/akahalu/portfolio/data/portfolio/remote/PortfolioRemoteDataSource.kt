@@ -10,6 +10,7 @@ import io.ktor.client.request.parameter
 import com.akahalu.portfolio.data.portfolio.dto.ExperienceDto
 import com.akahalu.portfolio.data.portfolio.dto.ExperienceListResponseDto
 import com.akahalu.portfolio.data.portfolio.dto.ExperienceSummaryDto
+import com.akahalu.portfolio.data.portfolio.dto.ProfileDto
 
 class PortfolioRemoteDataSource(
     private val apiClient: ApiClient,
@@ -177,4 +178,11 @@ class PortfolioRemoteDataSource(
             path = "portfolio/experiences/$slug",
         )
     }
+
+    suspend fun getProfile(): ProfileDto {
+        return apiClient.get(
+            path = "portfolio/profile",
+        )
+    }
+
 }

@@ -1,5 +1,9 @@
 package com.akahalu.portfolio.data.portfolio.mapper
 
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceDto
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceListResponseDto
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceSummaryDto
+import com.akahalu.portfolio.data.portfolio.dto.ProfileDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectCategoryDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectLinkDto
@@ -7,6 +11,12 @@ import com.akahalu.portfolio.data.portfolio.dto.ProjectListResponseDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectMediaDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectSummaryDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectTechnologyDto
+import com.akahalu.portfolio.domain.portfolio.model.EmploymentType
+import com.akahalu.portfolio.domain.portfolio.model.Experience
+import com.akahalu.portfolio.domain.portfolio.model.ExperienceLocationType
+import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
+import com.akahalu.portfolio.domain.portfolio.model.Profile
+import com.akahalu.portfolio.domain.portfolio.model.ProfileAvailabilityStatus
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectLink
@@ -18,13 +28,6 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectStatus
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnologyCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectVisibility
-import com.akahalu.portfolio.data.portfolio.dto.ExperienceDto
-import com.akahalu.portfolio.data.portfolio.dto.ExperienceListResponseDto
-import com.akahalu.portfolio.data.portfolio.dto.ExperienceSummaryDto
-import com.akahalu.portfolio.domain.portfolio.model.EmploymentType
-import com.akahalu.portfolio.domain.portfolio.model.Experience
-import com.akahalu.portfolio.domain.portfolio.model.ExperienceLocationType
-import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 
 fun ProjectCategoryDto.toDomain(): ProjectCategory {
     return ProjectCategory(
@@ -300,5 +303,44 @@ private fun String.toExperienceLocationType(): ExperienceLocationType {
         "remote" -> ExperienceLocationType.REMOTE
         "hybrid" -> ExperienceLocationType.HYBRID
         else -> ExperienceLocationType.ONSITE
+    }
+}
+
+fun ProfileDto.toDomain(): Profile {
+    return Profile(
+        firstName = first_name,
+        middleName = middle_name,
+        lastName = last_name,
+        displayName = display_name,
+        professionalTitle = professional_title,
+        headline = headline,
+        shortBio = short_bio,
+        biography = biography,
+        location = location,
+        country = country,
+        timezone = timezone,
+        primaryEmail = primary_email,
+        phone = phone,
+        websiteUrl = website_url,
+        resumeUrl = resume_url,
+        profileImageUrl = profile_image_url,
+        yearsOfExperience = years_of_experience,
+        availabilityStatus = availability_status.toProfileAvailabilityStatus(),
+        availabilityMessage = availability_message,
+        isPublic = is_public,
+        seoTitle = seo_title,
+        seoDescription = seo_description,
+    )
+}
+
+private fun String.toProfileAvailabilityStatus(): ProfileAvailabilityStatus {
+    return when (lowercase()) {
+        "available" -> ProfileAvailabilityStatus.AVAILABLE
+        "open_to_opportunities" ->
+            ProfileAvailabilityStatus.OPEN_TO_OPPORTUNITIES
+        "limited_availability" ->
+            ProfileAvailabilityStatus.LIMITED_AVAILABILITY
+        "unavailable" -> ProfileAvailabilityStatus.UNAVAILABLE
+        else -> ProfileAvailabilityStatus.UNAVAILABLE
     }
 }

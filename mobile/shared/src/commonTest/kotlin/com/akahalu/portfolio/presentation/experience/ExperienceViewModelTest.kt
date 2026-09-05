@@ -5,6 +5,7 @@ import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperienceLocationType
 import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 import com.akahalu.portfolio.domain.portfolio.model.Project
+import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
@@ -268,6 +269,10 @@ class ExperienceViewModelTest {
         override suspend fun getProject(
             slug: String,
         ): Project {
+            error("Not required for ExperienceViewModelTest.")
+        }
+
+        override suspend fun getProfile(): Profile {
             error("Not required for ExperienceViewModelTest.")
         }
     }

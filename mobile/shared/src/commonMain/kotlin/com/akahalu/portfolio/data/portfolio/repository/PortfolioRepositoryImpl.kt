@@ -2,13 +2,14 @@ package com.akahalu.portfolio.data.portfolio.repository
 
 import com.akahalu.portfolio.data.portfolio.mapper.toDomain
 import com.akahalu.portfolio.data.portfolio.remote.PortfolioRemoteDataSource
+import com.akahalu.portfolio.domain.portfolio.model.Experience
+import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
+import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
-import com.akahalu.portfolio.domain.portfolio.model.Experience
-import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 
 class PortfolioRepositoryImpl(
     private val remoteDataSource: PortfolioRemoteDataSource,
@@ -115,6 +116,12 @@ class PortfolioRepositoryImpl(
     ): Experience {
         return remoteDataSource
             .getExperience(slug)
+            .toDomain()
+    }
+
+    override suspend fun getProfile(): Profile {
+        return remoteDataSource
+            .getProfile()
             .toDomain()
     }
 }

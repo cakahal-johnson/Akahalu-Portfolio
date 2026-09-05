@@ -3,6 +3,7 @@ package com.akahalu.portfolio.presentation.skills
 
 import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
+import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
@@ -250,6 +251,10 @@ class SkillsViewModelTest {
             slug: String,
         ): Experience {
             throw UnsupportedOperationException()
+        }
+
+        override suspend fun getProfile(): Profile {
+            error("Not required for SkillsViewModelTest.")
         }
     }
 }
