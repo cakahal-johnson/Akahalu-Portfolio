@@ -2,6 +2,8 @@
 
 package com.akahalu.portfolio.presentation.projects
 
+import com.akahalu.portfolio.domain.portfolio.model.Experience
+import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectLink
@@ -169,6 +171,38 @@ class ProjectDetailViewModelTest {
             return project ?: throw IllegalStateException(
                 "No project configured.",
             )
+        }
+
+        override suspend fun getExperiences(
+            page: Int,
+            pageSize: Int,
+            search: String?,
+            employmentType: String?,
+            locationType: String?,
+            isCurrent: Boolean?,
+            isFeatured: Boolean?,
+        ): ExperiencePage {
+            return ExperiencePage(
+                items = emptyList(),
+                page = page,
+                pageSize = pageSize,
+                totalItems = 0,
+                totalPages = 0,
+                hasNextPage = false,
+                hasPreviousPage = false,
+            )
+        }
+
+        override suspend fun getFeaturedExperiences(
+            limit: Int,
+        ): List<Experience> {
+            return emptyList()
+        }
+
+        override suspend fun getExperience(
+            slug: String,
+        ): Experience {
+            error("Experience is not used by this test.")
         }
     }
 }

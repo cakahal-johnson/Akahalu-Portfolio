@@ -18,6 +18,13 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectStatus
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnologyCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectVisibility
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceDto
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceListResponseDto
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceSummaryDto
+import com.akahalu.portfolio.domain.portfolio.model.EmploymentType
+import com.akahalu.portfolio.domain.portfolio.model.Experience
+import com.akahalu.portfolio.domain.portfolio.model.ExperienceLocationType
+import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 
 fun ProjectCategoryDto.toDomain(): ProjectCategory {
     return ProjectCategory(
@@ -211,5 +218,87 @@ private fun String.toProjectVisibility(): ProjectVisibility {
         "public" -> ProjectVisibility.PUBLIC
         "unlisted" -> ProjectVisibility.UNLISTED
         else -> ProjectVisibility.PRIVATE
+    }
+}
+
+fun ExperienceSummaryDto.toDomain(): Experience {
+    return Experience(
+        id = id,
+        companyName = company_name,
+        jobTitle = job_title,
+        slug = slug,
+        employmentType = employment_type.toEmploymentType(),
+        location = location,
+        locationType = location_type.toExperienceLocationType(),
+        startDate = start_date,
+        endDate = end_date,
+        isCurrent = is_current,
+        summary = summary,
+        companyWebsite = company_website,
+        companyLogoUrl = company_logo_url,
+        sortOrder = sort_order,
+        isFeatured = is_featured,
+        responsibilities = null,
+        achievements = null,
+    )
+}
+
+fun ExperienceDto.toDomain(): Experience {
+    return Experience(
+        id = id,
+        companyName = company_name,
+        jobTitle = job_title,
+        slug = slug,
+        employmentType = employment_type.toEmploymentType(),
+        location = location,
+        locationType = location_type.toExperienceLocationType(),
+        startDate = start_date,
+        endDate = end_date,
+        isCurrent = is_current,
+        summary = summary,
+        companyWebsite = company_website,
+        companyLogoUrl = company_logo_url,
+        sortOrder = sort_order,
+        isFeatured = is_featured,
+        responsibilities = responsibilities,
+        achievements = achievements,
+    )
+}
+
+fun ExperienceListResponseDto.toDomain(): ExperiencePage {
+    return ExperiencePage(
+        items = items.map(
+            ExperienceSummaryDto::toDomain,
+        ),
+        page = page,
+        pageSize = page_size,
+        totalItems = total_items,
+        totalPages = total_pages,
+        hasNextPage = has_next_page,
+        hasPreviousPage = has_previous_page,
+    )
+}
+
+private fun String.toEmploymentType(): EmploymentType {
+    return when (lowercase()) {
+        "full_time" -> EmploymentType.FULL_TIME
+        "part_time" -> EmploymentType.PART_TIME
+        "contract" -> EmploymentType.CONTRACT
+        "freelance" -> EmploymentType.FREELANCE
+        "internship" -> EmploymentType.INTERNSHIP
+        "apprenticeship" -> EmploymentType.APPRENTICESHIP
+        "temporary" -> EmploymentType.TEMPORARY
+        "volunteer" -> EmploymentType.VOLUNTEER
+        "self_employed" -> EmploymentType.SELF_EMPLOYED
+        else -> EmploymentType.OTHER
+    }
+}
+
+private fun String.toExperienceLocationType(): ExperienceLocationType {
+    return when (lowercase()) {
+        "onsite" -> ExperienceLocationType.ONSITE
+        "remote" -> ExperienceLocationType.REMOTE
+        "hybrid" -> ExperienceLocationType.HYBRID
+        else -> ExperienceLocationType.ONSITE
     }
 }

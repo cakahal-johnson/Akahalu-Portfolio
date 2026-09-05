@@ -7,6 +7,8 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
+import com.akahalu.portfolio.domain.portfolio.model.Experience
+import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 
 class PortfolioRepositoryImpl(
     private val remoteDataSource: PortfolioRemoteDataSource,
@@ -75,6 +77,44 @@ class PortfolioRepositoryImpl(
     ): Project {
         return remoteDataSource
             .getProject(slug)
+            .toDomain()
+    }
+
+    override suspend fun getExperiences(
+        page: Int,
+        pageSize: Int,
+        search: String?,
+        employmentType: String?,
+        locationType: String?,
+        isCurrent: Boolean?,
+        isFeatured: Boolean?,
+    ): ExperiencePage {
+        return remoteDataSource
+            .getExperiences(
+                page = page,
+                pageSize = pageSize,
+                search = search,
+                employmentType = employmentType,
+                locationType = locationType,
+                isCurrent = isCurrent,
+                isFeatured = isFeatured,
+            )
+            .toDomain()
+    }
+
+    override suspend fun getFeaturedExperiences(
+        limit: Int,
+    ): List<Experience> {
+        return remoteDataSource
+            .getFeaturedExperiences(limit)
+            .map { it.toDomain() }
+    }
+
+    override suspend fun getExperience(
+        slug: String,
+    ): Experience {
+        return remoteDataSource
+            .getExperience(slug)
             .toDomain()
     }
 }

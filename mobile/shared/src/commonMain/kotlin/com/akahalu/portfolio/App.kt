@@ -23,10 +23,13 @@ import com.akahalu.portfolio.presentation.portfolio.PortfolioUiState
 import com.akahalu.portfolio.presentation.portfolio.PortfolioViewModel
 import com.akahalu.portfolio.presentation.projects.ProjectDetailScreen
 import com.akahalu.portfolio.presentation.projects.ProjectDetailViewModel
+import com.akahalu.portfolio.presentation.experience.ExperienceScreen
+import com.akahalu.portfolio.presentation.experience.ExperienceUiState
 import com.akahalu.portfolio.presentation.projects.ProjectsScreen
 import com.akahalu.portfolio.presentation.shell.AppNavigationBar
 import com.akahalu.portfolio.presentation.shell.PlaceholderScreen
 import kotlinx.coroutines.CoroutineScope
+import com.akahalu.portfolio.presentation.experience.ExperienceViewModel
 
 @Composable
 fun App(
@@ -57,6 +60,23 @@ fun App(
 
         val portfolioUiState by portfolioViewModel.uiState.collectAsState()
 
+        val experienceViewModel = remember(
+            dependencies.portfolioRepository,
+            scope,
+        ) {
+            ExperienceViewModel(
+                repository = dependencies.portfolioRepository,
+                scope = scope,
+            )
+        }
+
+        val experienceUiState by
+        experienceViewModel.uiState.collectAsState()
+
+        LaunchedEffect(experienceViewModel) {
+            experienceViewModel.loadExperiences()
+        }
+
         val navigator = remember {
             AppNavigator()
         }
@@ -82,6 +102,7 @@ fun App(
             onBackFromProjectDetail = {
                 navigator.goBack()
             },
+            experienceUiState = experienceUiState,
         )
     }
 }
@@ -95,6 +116,7 @@ private fun AppContent(
     onTopLevelDestinationSelected: (AppDestination) -> Unit,
     onProjectSelected: (String) -> Unit,
     onBackFromProjectDetail: () -> Unit,
+    experienceUiState: ExperienceUiState,
 ) {
     val isDetailDestination =
         destination is AppDestination.ProjectDetail

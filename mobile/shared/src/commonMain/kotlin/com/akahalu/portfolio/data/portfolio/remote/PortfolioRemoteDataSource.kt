@@ -7,6 +7,9 @@ import com.akahalu.portfolio.data.portfolio.dto.ProjectListResponseDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectSummaryDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectTechnologyDto
 import io.ktor.client.request.parameter
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceDto
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceListResponseDto
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceSummaryDto
 
 class PortfolioRemoteDataSource(
     private val apiClient: ApiClient,
@@ -117,6 +120,61 @@ class PortfolioRemoteDataSource(
     ): ProjectDto {
         return apiClient.get(
             path = "portfolio/projects/$slug",
+        )
+    }
+
+    suspend fun getExperiences(
+        page: Int = 1,
+        pageSize: Int = 20,
+        search: String? = null,
+        employmentType: String? = null,
+        locationType: String? = null,
+        isCurrent: Boolean? = null,
+        isFeatured: Boolean? = null,
+    ): ExperienceListResponseDto {
+        return apiClient.get(
+            path = "portfolio/experiences",
+        ) {
+            parameter("page", page)
+            parameter("page_size", pageSize)
+
+            search?.let {
+                parameter("search", it)
+            }
+
+            employmentType?.let {
+                parameter("employment_type", it)
+            }
+
+            locationType?.let {
+                parameter("location_type", it)
+            }
+
+            isCurrent?.let {
+                parameter("is_current", it)
+            }
+
+            isFeatured?.let {
+                parameter("is_featured", it)
+            }
+        }
+    }
+
+    suspend fun getFeaturedExperiences(
+        limit: Int = 6,
+    ): List<ExperienceSummaryDto> {
+        return apiClient.get(
+            path = "portfolio/experiences/featured",
+        ) {
+            parameter("limit", limit)
+        }
+    }
+
+    suspend fun getExperience(
+        slug: String,
+    ): ExperienceDto {
+        return apiClient.get(
+            path = "portfolio/experiences/$slug",
         )
     }
 }

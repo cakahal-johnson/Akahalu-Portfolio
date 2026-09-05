@@ -1,6 +1,8 @@
 @file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 package com.akahalu.portfolio.presentation.portfolio
 
+import com.akahalu.portfolio.domain.portfolio.model.Experience
+import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
 import com.akahalu.portfolio.domain.portfolio.model.ProjectStatus
@@ -192,6 +194,38 @@ class PortfolioViewModelTest {
             return projectPage.items.first {
                 it.slug == slug
             }
+        }
+
+        override suspend fun getExperiences(
+            page: Int,
+            pageSize: Int,
+            search: String?,
+            employmentType: String?,
+            locationType: String?,
+            isCurrent: Boolean?,
+            isFeatured: Boolean?,
+        ): ExperiencePage {
+            return ExperiencePage(
+                items = emptyList(),
+                page = page,
+                pageSize = pageSize,
+                totalItems = 0,
+                totalPages = 0,
+                hasNextPage = false,
+                hasPreviousPage = false,
+            )
+        }
+
+        override suspend fun getFeaturedExperiences(
+            limit: Int,
+        ): List<Experience> {
+            return emptyList()
+        }
+
+        override suspend fun getExperience(
+            slug: String,
+        ): Experience {
+            error("Experience is not used by this test.")
         }
     }
 }
