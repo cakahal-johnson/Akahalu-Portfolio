@@ -35,6 +35,11 @@ private val topLevelNavigationItems = listOf(
         icon = "E",
     ),
     TopLevelNavigationItem(
+        destination = AppDestination.Skills,
+        label = "Skills",
+        icon = "S",
+    ),
+    TopLevelNavigationItem(
         destination = AppDestination.Contact,
         label = "Contact",
         icon = "C",

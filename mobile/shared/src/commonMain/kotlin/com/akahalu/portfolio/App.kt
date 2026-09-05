@@ -18,18 +18,21 @@ import com.akahalu.portfolio.core.navigation.AppDestination
 import com.akahalu.portfolio.core.navigation.AppNavigator
 import com.akahalu.portfolio.core.network.NetworkConfig
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
+import com.akahalu.portfolio.presentation.experience.ExperienceScreen
+import com.akahalu.portfolio.presentation.experience.ExperienceUiState
+import com.akahalu.portfolio.presentation.experience.ExperienceViewModel
 import com.akahalu.portfolio.presentation.home.HomeScreen
 import com.akahalu.portfolio.presentation.portfolio.PortfolioUiState
 import com.akahalu.portfolio.presentation.portfolio.PortfolioViewModel
 import com.akahalu.portfolio.presentation.projects.ProjectDetailScreen
 import com.akahalu.portfolio.presentation.projects.ProjectDetailViewModel
-import com.akahalu.portfolio.presentation.experience.ExperienceScreen
-import com.akahalu.portfolio.presentation.experience.ExperienceUiState
 import com.akahalu.portfolio.presentation.projects.ProjectsScreen
 import com.akahalu.portfolio.presentation.shell.AppNavigationBar
 import com.akahalu.portfolio.presentation.shell.PlaceholderScreen
+import com.akahalu.portfolio.presentation.skills.SkillsScreen
+import com.akahalu.portfolio.presentation.skills.SkillsUiState
+import com.akahalu.portfolio.presentation.skills.SkillsViewModel
 import kotlinx.coroutines.CoroutineScope
-import com.akahalu.portfolio.presentation.experience.ExperienceViewModel
 
 @Composable
 fun App(
@@ -70,11 +73,26 @@ fun App(
             )
         }
 
-        val experienceUiState by
-        experienceViewModel.uiState.collectAsState()
+        val experienceUiState by experienceViewModel.uiState.collectAsState()
 
         LaunchedEffect(experienceViewModel) {
             experienceViewModel.loadExperiences()
+        }
+
+        val skillsViewModel = remember(
+            dependencies.portfolioRepository,
+            scope,
+        ) {
+            SkillsViewModel(
+                repository = dependencies.portfolioRepository,
+                scope = scope,
+            )
+        }
+
+        val skillsUiState by skillsViewModel.uiState.collectAsState()
+
+        LaunchedEffect(skillsViewModel) {
+            skillsViewModel.loadTechnologies()
         }
 
         val navigator = remember {
@@ -103,6 +121,7 @@ fun App(
                 navigator.goBack()
             },
             experienceUiState = experienceUiState,
+            skillsUiState = skillsUiState,
         )
     }
 }
@@ -117,6 +136,7 @@ private fun AppContent(
     onProjectSelected: (String) -> Unit,
     onBackFromProjectDetail: () -> Unit,
     experienceUiState: ExperienceUiState,
+    skillsUiState: SkillsUiState,
 ) {
     val isDetailDestination =
         destination is AppDestination.ProjectDetail
@@ -161,10 +181,14 @@ private fun AppContent(
                 }
 
                 AppDestination.Experience -> {
-                    PlaceholderScreen(
-                        title = "Experience",
-                        subtitle =
-                            "Professional experience will be added in a future milestone.",
+                    ExperienceScreen(
+                        uiState = experienceUiState,
+                    )
+                }
+
+                AppDestination.Skills -> {
+                    SkillsScreen(
+                        uiState = skillsUiState,
                     )
                 }
 
