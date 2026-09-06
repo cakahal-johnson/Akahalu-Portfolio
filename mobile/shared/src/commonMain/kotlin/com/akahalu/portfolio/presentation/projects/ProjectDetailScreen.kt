@@ -145,6 +145,10 @@ private fun ProjectDetailContent(
             )
         }
 
+        ProjectMediaGallery(
+            media = project.media,
+        )
+
         project.description?.let { description ->
             DetailSection(
                 title = "Overview",

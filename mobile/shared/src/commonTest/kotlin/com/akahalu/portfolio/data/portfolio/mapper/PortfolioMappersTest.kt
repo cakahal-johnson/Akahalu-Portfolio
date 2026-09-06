@@ -2,7 +2,9 @@ package com.akahalu.portfolio.data.portfolio.mapper
 
 import com.akahalu.portfolio.data.portfolio.dto.ProjectCategoryDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectDto
+import com.akahalu.portfolio.data.portfolio.dto.ProjectMediaDto
 import com.akahalu.portfolio.data.portfolio.dto.ProjectTechnologyDto
+import com.akahalu.portfolio.domain.portfolio.model.ProjectMediaType
 import com.akahalu.portfolio.domain.portfolio.model.ProjectStatus
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnologyCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectVisibility
@@ -164,6 +166,74 @@ class PortfolioMappersTest {
         assertEquals(
             "https://example.com",
             result.liveUrl,
+        )
+    }
+
+    @Test
+    fun projectDtoMapsMediaFields() {
+        val dto = ProjectDto(
+            id = "project-1",
+            title = "Akahalu Portfolio",
+            slug = "akahalu-portfolio",
+            short_description = "Production-ready portfolio.",
+            status = "published",
+            visibility = "public",
+            is_featured = true,
+            sort_order = 1,
+            media = listOf(
+                ProjectMediaDto(
+                    id = "media-1",
+                    project_id = "project-1",
+                    media_type = "image",
+                    url = "https://example.com/portfolio.png",
+                    thumbnail_url = "https://example.com/portfolio-thumb.png",
+                    alt_text = "Portfolio screenshot",
+                    caption = "Portfolio dashboard",
+                    provider = "s3",
+                    provider_asset_id = "asset-1",
+                    mime_type = "image/png",
+                    width = 1920,
+                    height = 1080,
+                    file_size_bytes = 1024,
+                    duration_seconds = null,
+                    is_primary = true,
+                    sort_order = 1,
+                ),
+            ),
+        )
+
+        val result = dto.toDomain()
+
+        assertEquals(
+            1,
+            result.media.size,
+        )
+
+        val media = result.media.first()
+
+        assertEquals(
+            "media-1",
+            media.id,
+        )
+        assertEquals(
+            ProjectMediaType.IMAGE,
+            media.mediaType,
+        )
+        assertEquals(
+            "https://example.com/portfolio.png",
+            media.url,
+        )
+        assertEquals(
+            "https://example.com/portfolio-thumb.png",
+            media.thumbnailUrl,
+        )
+        assertEquals(
+            true,
+            media.isPrimary,
+        )
+        assertEquals(
+            1,
+            media.sortOrder,
         )
     }
 }
