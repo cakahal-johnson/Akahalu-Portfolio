@@ -1,6 +1,9 @@
 @file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+
 package com.akahalu.portfolio.presentation.portfolio
 
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 import com.akahalu.portfolio.domain.portfolio.model.Profile
@@ -231,6 +234,14 @@ class PortfolioViewModelTest {
 
         override suspend fun getProfile(): Profile {
             error("Not required for PortfolioViewModelTest.")
+        }
+
+        override suspend fun submitContactInquiry(
+            submission: ContactInquirySubmission,
+        ): ContactInquirySubmissionResult {
+            throw UnsupportedOperationException(
+                "submitContactInquiry is not used by this test.",
+            )
         }
     }
 }

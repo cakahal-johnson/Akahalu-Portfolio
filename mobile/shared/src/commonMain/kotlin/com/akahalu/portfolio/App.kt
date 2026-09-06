@@ -17,6 +17,7 @@ import com.akahalu.portfolio.core.designsystem.theme.AkahaluPortfolioTheme
 import com.akahalu.portfolio.core.navigation.AppDestination
 import com.akahalu.portfolio.core.navigation.AppNavigator
 import com.akahalu.portfolio.core.network.NetworkConfig
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquiryType
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
 import com.akahalu.portfolio.presentation.contact.ContactScreen
 import com.akahalu.portfolio.presentation.contact.ContactUiState
@@ -141,6 +142,15 @@ fun App(
             experienceUiState = experienceUiState,
             skillsUiState = skillsUiState,
             contactUiState = contactUiState,
+            onContactNameChange = contactViewModel::updateName,
+            onContactEmailChange = contactViewModel::updateEmail,
+            onContactPhoneChange = contactViewModel::updatePhone,
+            onContactCompanyChange = contactViewModel::updateCompany,
+            onContactInquiryTypeChange = contactViewModel::updateInquiryType,
+            onContactSubjectChange = contactViewModel::updateSubject,
+            onContactMessageChange = contactViewModel::updateMessage,
+            onContactConsentChange = contactViewModel::updateConsentGiven,
+            onContactSubmit = contactViewModel::submitContactInquiry,
         )
     }
 }
@@ -157,6 +167,15 @@ private fun AppContent(
     experienceUiState: ExperienceUiState,
     skillsUiState: SkillsUiState,
     contactUiState: ContactUiState,
+    onContactNameChange: (String) -> Unit,
+    onContactEmailChange: (String) -> Unit,
+    onContactPhoneChange: (String) -> Unit,
+    onContactCompanyChange: (String) -> Unit,
+    onContactInquiryTypeChange: (ContactInquiryType) -> Unit,
+    onContactSubjectChange: (String) -> Unit,
+    onContactMessageChange: (String) -> Unit,
+    onContactConsentChange: (Boolean) -> Unit,
+    onContactSubmit: () -> Unit,
 ) {
     val isDetailDestination =
         destination is AppDestination.ProjectDetail
@@ -215,6 +234,15 @@ private fun AppContent(
                 AppDestination.Contact -> {
                     ContactScreen(
                         uiState = contactUiState,
+                        onNameChange = onContactNameChange,
+                        onEmailChange = onContactEmailChange,
+                        onPhoneChange = onContactPhoneChange,
+                        onCompanyChange = onContactCompanyChange,
+                        onInquiryTypeChange = onContactInquiryTypeChange,
+                        onSubjectChange = onContactSubjectChange,
+                        onMessageChange = onContactMessageChange,
+                        onConsentChange = onContactConsentChange,
+                        onSubmit = onContactSubmit,
                     )
                 }
             }

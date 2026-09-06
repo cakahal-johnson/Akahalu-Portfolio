@@ -1,5 +1,7 @@
 package com.akahalu.portfolio.presentation.experience
 
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 import com.akahalu.portfolio.domain.portfolio.model.EmploymentType
 import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperienceLocationType
@@ -274,6 +276,14 @@ class ExperienceViewModelTest {
 
         override suspend fun getProfile(): Profile {
             error("Not required for ExperienceViewModelTest.")
+        }
+
+        override suspend fun submitContactInquiry(
+            submission: ContactInquirySubmission,
+        ): ContactInquirySubmissionResult {
+            throw UnsupportedOperationException(
+                "submitContactInquiry is not used by this test.",
+            )
         }
     }
 }

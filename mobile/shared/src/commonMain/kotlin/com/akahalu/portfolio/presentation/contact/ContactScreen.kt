@@ -7,21 +7,38 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquiryType
 import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.ProfileAvailabilityStatus
 
 @Composable
 fun ContactScreen(
     uiState: ContactUiState,
+    onNameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
+    onCompanyChange: (String) -> Unit,
+    onInquiryTypeChange: (ContactInquiryType) -> Unit,
+    onSubjectChange: (String) -> Unit,
+    onMessageChange: (String) -> Unit,
+    onConsentChange: (Boolean) -> Unit,
+    onSubmit: () -> Unit,
 ) {
     when (uiState) {
         ContactUiState.Loading -> {
@@ -31,6 +48,16 @@ fun ContactScreen(
         is ContactUiState.Success -> {
             ContactContent(
                 profile = uiState.profile,
+                form = uiState.form,
+                onNameChange = onNameChange,
+                onEmailChange = onEmailChange,
+                onPhoneChange = onPhoneChange,
+                onCompanyChange = onCompanyChange,
+                onInquiryTypeChange = onInquiryTypeChange,
+                onSubjectChange = onSubjectChange,
+                onMessageChange = onMessageChange,
+                onConsentChange = onConsentChange,
+                onSubmit = onSubmit,
             )
         }
 
@@ -80,6 +107,16 @@ private fun ContactError(
 @Composable
 private fun ContactContent(
     profile: Profile,
+    form: ContactFormState,
+    onNameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
+    onCompanyChange: (String) -> Unit,
+    onInquiryTypeChange: (ContactInquiryType) -> Unit,
+    onSubjectChange: (String) -> Unit,
+    onMessageChange: (String) -> Unit,
+    onConsentChange: (Boolean) -> Unit,
+    onSubmit: () -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -108,14 +145,32 @@ private fun ContactContent(
         }
 
         item {
-            AvailabilityCard(
-                profile = profile,
+            AvailabilityCard(profile = profile)
+        }
+
+        item {
+            ContactInformationCard(profile = profile)
+        }
+
+        item {
+            Text(
+                text = "Send a message",
+                style = MaterialTheme.typography.headlineSmall,
             )
         }
 
         item {
-            ContactInformationCard(
-                profile = profile,
+            ContactFormCard(
+                form = form,
+                onNameChange = onNameChange,
+                onEmailChange = onEmailChange,
+                onPhoneChange = onPhoneChange,
+                onCompanyChange = onCompanyChange,
+                onInquiryTypeChange = onInquiryTypeChange,
+                onSubjectChange = onSubjectChange,
+                onMessageChange = onMessageChange,
+                onConsentChange = onConsentChange,
+                onSubmit = onSubmit,
             )
         }
 
@@ -150,9 +205,7 @@ private fun ContactContent(
         }
 
         item {
-            ProfileLinksCard(
-                profile = profile,
-            )
+            ProfileLinksCard(profile = profile)
         }
     }
 }
@@ -265,6 +318,188 @@ private fun ContactField(
 }
 
 @Composable
+private fun ContactFormCard(
+    form: ContactFormState,
+    onNameChange: (String) -> Unit,
+    onEmailChange: (String) -> Unit,
+    onPhoneChange: (String) -> Unit,
+    onCompanyChange: (String) -> Unit,
+    onInquiryTypeChange: (ContactInquiryType) -> Unit,
+    onSubjectChange: (String) -> Unit,
+    onMessageChange: (String) -> Unit,
+    onConsentChange: (Boolean) -> Unit,
+    onSubmit: () -> Unit,
+) {
+    var inquiryMenuExpanded by remember {
+        mutableStateOf(false)
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedTextField(
+                value = form.name,
+                onValueChange = onNameChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Name")
+                },
+                singleLine = true,
+                enabled = !form.isSubmitting,
+            )
+
+            OutlinedTextField(
+                value = form.email,
+                onValueChange = onEmailChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Email")
+                },
+                singleLine = true,
+                enabled = !form.isSubmitting,
+            )
+
+            OutlinedTextField(
+                value = form.phone,
+                onValueChange = onPhoneChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Phone")
+                },
+                singleLine = true,
+                enabled = !form.isSubmitting,
+            )
+
+            OutlinedTextField(
+                value = form.company,
+                onValueChange = onCompanyChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Company")
+                },
+                singleLine = true,
+                enabled = !form.isSubmitting,
+            )
+
+            Column {
+                TextButton(
+                    onClick = {
+                        if (!form.isSubmitting) {
+                            inquiryMenuExpanded = true
+                        }
+                    },
+                ) {
+                    Text(
+                        text = "Inquiry type: ${form.inquiryType.displayName}",
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = inquiryMenuExpanded,
+                    onDismissRequest = {
+                        inquiryMenuExpanded = false
+                    },
+                ) {
+                    ContactInquiryType.entries.forEach { type ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(type.displayName)
+                            },
+                            onClick = {
+                                inquiryMenuExpanded = false
+                                onInquiryTypeChange(type)
+                            },
+                        )
+                    }
+                }
+            }
+
+            OutlinedTextField(
+                value = form.subject,
+                onValueChange = onSubjectChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Subject")
+                },
+                singleLine = true,
+                enabled = !form.isSubmitting,
+            )
+
+            OutlinedTextField(
+                value = form.message,
+                onValueChange = onMessageChange,
+                modifier = Modifier.fillMaxWidth(),
+                label = {
+                    Text("Message")
+                },
+                minLines = 5,
+                enabled = !form.isSubmitting,
+            )
+
+            TextButton(
+                onClick = {
+                    onConsentChange(!form.consentGiven)
+                },
+                enabled = !form.isSubmitting,
+            ) {
+                Text(
+                    text = if (form.consentGiven) {
+                        "[x] I agree to be contacted regarding this inquiry."
+                    } else {
+                        "[ ] I agree to be contacted regarding this inquiry."
+                    },
+                )
+            }
+
+            form.validationError
+                ?.takeIf { it.isNotBlank() }
+                ?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+
+            form.submissionError
+                ?.takeIf { it.isNotBlank() }
+                ?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+
+            form.submissionMessage
+                ?.takeIf { it.isNotBlank() }
+                ?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+
+            Button(
+                onClick = onSubmit,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !form.isSubmitting,
+            ) {
+                if (form.isSubmitting) {
+                    CircularProgressIndicator()
+                } else {
+                    Text("Send message")
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun ProfileLinksCard(
     profile: Profile,
 ) {
@@ -297,8 +532,8 @@ private fun ProfileLinksCard(
             links.forEach { (label, url) ->
                 TextButton(
                     onClick = {
-                        // External URL handling will be added through
-                        // the platform-specific URL launcher foundation.
+                        // External URL handling remains a separate
+                        // platform URL launcher milestone.
                     },
                 ) {
                     Text(

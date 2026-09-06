@@ -11,6 +11,8 @@ import com.akahalu.portfolio.data.portfolio.dto.ExperienceDto
 import com.akahalu.portfolio.data.portfolio.dto.ExperienceListResponseDto
 import com.akahalu.portfolio.data.portfolio.dto.ExperienceSummaryDto
 import com.akahalu.portfolio.data.portfolio.dto.ProfileDto
+import com.akahalu.portfolio.data.portfolio.dto.ContactInquiryCreateDto
+import com.akahalu.portfolio.data.portfolio.dto.ContactInquiryResponseDto
 
 class PortfolioRemoteDataSource(
     private val apiClient: ApiClient,
@@ -182,6 +184,15 @@ class PortfolioRemoteDataSource(
     suspend fun getProfile(): ProfileDto {
         return apiClient.get(
             path = "portfolio/profile",
+        )
+    }
+
+    suspend fun submitContactInquiry(
+        request: ContactInquiryCreateDto,
+    ): ContactInquiryResponseDto {
+        return apiClient.post(
+            path = "contact/inquiries",
+            body = request,
         )
     }
 

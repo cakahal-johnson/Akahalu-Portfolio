@@ -1,5 +1,9 @@
-package com.akahalu.portfolio.core.network
+package com.akahalu.portfolio.data.portfolio.repository
 
+import com.akahalu.portfolio.core.network.ApiClient
+import com.akahalu.portfolio.data.portfolio.remote.PortfolioRemoteDataSource
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquiryType
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockEngineConfig
@@ -11,20 +15,14 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ApiClientTest {
-
-    @Serializable
-    private data class Response(
-        val message: String,
-    )
+class ContactRepositoryImplTest {
 
     @Test
-    fun postReturnsDecodedResponse() = runTest {
+    fun submitContactInquiryPostsAndMapsResponse() = runTest {
         var requestMethod: HttpMethod? = null
 
         val engine = MockEngine(
@@ -44,7 +42,7 @@ class ApiClientTest {
             },
         )
 
-        val client = HttpClient(engine) {
+        val httpClient = HttpClient(engine) {
             install(ContentNegotiation) {
                 json(
                     Json {
@@ -55,12 +53,23 @@ class ApiClientTest {
             }
         }
 
-        val apiClient = ApiClient(client)
+        val repository = PortfolioRepositoryImpl(
+            PortfolioRemoteDataSource(
+                ApiClient(httpClient),
+            ),
+        )
 
-        val result = apiClient.post<Response>(
-            path = "contact/inquiries",
-            body = mapOf(
-                "name" to "Akahalu",
+        val result = repository.submitContactInquiry(
+            ContactInquirySubmission(
+                name = "Akahalu Johnson",
+                email = "contact@example.com",
+                phone = "+1 306 555 0100",
+                company = "Akahalu Technologies",
+                subject = "Software development opportunity",
+                message = "I would like to discuss a software development opportunity.",
+                inquiryType = ContactInquiryType.EMPLOYMENT,
+                consentGiven = true,
+                sourcePage = "mobile/contact",
             ),
         )
 
@@ -74,6 +83,6 @@ class ApiClientTest {
             result.message,
         )
 
-        client.close()
+        httpClient.close()
     }
 }

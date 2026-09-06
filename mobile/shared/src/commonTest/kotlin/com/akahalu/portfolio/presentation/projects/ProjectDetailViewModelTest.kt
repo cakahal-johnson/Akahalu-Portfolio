@@ -2,6 +2,8 @@
 
 package com.akahalu.portfolio.presentation.projects
 
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 import com.akahalu.portfolio.domain.portfolio.model.Profile
@@ -208,6 +210,14 @@ class ProjectDetailViewModelTest {
 
         override suspend fun getProfile(): Profile {
             error("Not required for ProjectDetailViewModelTest.")
+        }
+
+        override suspend fun submitContactInquiry(
+            submission: ContactInquirySubmission,
+        ): ContactInquirySubmissionResult {
+            throw UnsupportedOperationException(
+                "submitContactInquiry is not used by this test.",
+            )
         }
     }
 }

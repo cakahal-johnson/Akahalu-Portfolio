@@ -22,6 +22,9 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquiryType
 
 class ContactViewModelTest {
 
@@ -207,5 +210,116 @@ class ContactViewModelTest {
 
             return requireNotNull(profile)
         }
+
+        override suspend fun submitContactInquiry(
+            submission: ContactInquirySubmission,
+        ): ContactInquirySubmissionResult {
+            failure?.let { throw it }
+
+            return ContactInquirySubmissionResult(
+                message = "Your message has been received successfully.",
+            )
+        }
+    }
+
+    @Test
+    fun validFormSubmitsSuccessfully() = runTest {
+        val repository = FakePortfolioRepository(
+            profile = createProfile(),
+        )
+
+        val viewModel = ContactViewModel(
+            repository = repository,
+            scope = backgroundScope,
+        )
+
+        viewModel.loadProfile()
+        advanceUntilIdle()
+
+        viewModel.updateName("Akahalu Johnson")
+        viewModel.updateEmail("contact@example.com")
+        viewModel.updateSubject("Software opportunity")
+        viewModel.updateMessage(
+            "I would like to discuss a software development opportunity.",
+        )
+
+        viewModel.submitContactInquiry()
+        advanceUntilIdle()
+
+        val state = assertIs<ContactUiState.Success>(
+            viewModel.uiState.value,
+        )
+
+        assertEquals(
+            "Your message has been received successfully.",
+            state.form.submissionMessage,
+        )
+
+        assertEquals(
+            false,
+            state.form.isSubmitting,
+        )
+    }
+
+    @Test
+    fun invalidFormProducesValidationError() = runTest {
+        val repository = FakePortfolioRepository(
+            profile = createProfile(),
+        )
+
+        val viewModel = ContactViewModel(
+            repository = repository,
+            scope = backgroundScope,
+        )
+
+        viewModel.loadProfile()
+        advanceUntilIdle()
+
+        viewModel.submitContactInquiry()
+        advanceUntilIdle()
+
+        val state = assertIs<ContactUiState.Success>(
+            viewModel.uiState.value,
+        )
+
+        assertEquals(
+            "Please enter your name.",
+            state.form.validationError,
+        )
+    }
+
+    @Test
+    fun submissionFailureProducesError() = runTest {
+        val repository = FakePortfolioRepository(
+            profile = createProfile(),
+            failure = IllegalStateException("Submission failed."),
+        )
+
+        val viewModel = ContactViewModel(
+            repository = repository,
+            scope = backgroundScope,
+        )
+
+        viewModel.loadProfile()
+        advanceUntilIdle()
+
+        viewModel.updateName("Akahalu Johnson")
+        viewModel.updateEmail("contact@example.com")
+        viewModel.updateSubject("Software opportunity")
+        viewModel.updateMessage(
+            "I would like to discuss a software development opportunity.",
+        )
+
+        viewModel.submitContactInquiry()
+        advanceUntilIdle()
+
+        val state = assertIs<ContactUiState.Success>(
+            viewModel.uiState.value,
+        )
+
+        assertEquals(
+            "Submission failed.",
+            state.form.submissionError,
+        )
     }
 }

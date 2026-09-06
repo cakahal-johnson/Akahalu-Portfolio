@@ -7,6 +7,8 @@ import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 
 interface PortfolioRepository {
 
@@ -60,4 +62,8 @@ interface PortfolioRepository {
     ): Experience
 
     suspend fun getProfile(): Profile
+
+    suspend fun submitContactInquiry(
+        submission: ContactInquirySubmission,
+    ): ContactInquirySubmissionResult
 }

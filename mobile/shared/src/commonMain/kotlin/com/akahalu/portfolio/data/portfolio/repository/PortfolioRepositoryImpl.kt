@@ -10,6 +10,9 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
+import com.akahalu.portfolio.data.portfolio.mapper.toDto
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 
 class PortfolioRepositoryImpl(
     private val remoteDataSource: PortfolioRemoteDataSource,
@@ -122,6 +125,16 @@ class PortfolioRepositoryImpl(
     override suspend fun getProfile(): Profile {
         return remoteDataSource
             .getProfile()
+            .toDomain()
+    }
+
+    override suspend fun submitContactInquiry(
+        submission: ContactInquirySubmission,
+    ): ContactInquirySubmissionResult {
+        return remoteDataSource
+            .submitContactInquiry(
+                submission.toDto(),
+            )
             .toDomain()
     }
 }

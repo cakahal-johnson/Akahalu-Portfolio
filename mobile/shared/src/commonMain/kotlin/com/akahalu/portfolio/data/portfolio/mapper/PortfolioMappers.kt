@@ -28,6 +28,10 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectStatus
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnologyCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectVisibility
+import com.akahalu.portfolio.data.portfolio.dto.ContactInquiryCreateDto
+import com.akahalu.portfolio.data.portfolio.dto.ContactInquiryResponseDto
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 
 fun ProjectCategoryDto.toDomain(): ProjectCategory {
     return ProjectCategory(
@@ -343,4 +347,26 @@ private fun String.toProfileAvailabilityStatus(): ProfileAvailabilityStatus {
         "unavailable" -> ProfileAvailabilityStatus.UNAVAILABLE
         else -> ProfileAvailabilityStatus.UNAVAILABLE
     }
+}
+
+fun ContactInquirySubmission.toDto(): ContactInquiryCreateDto {
+    return ContactInquiryCreateDto(
+        name = name,
+        email = email,
+        phone = phone,
+        company = company,
+        subject = subject,
+        message = message,
+        inquiryType = inquiryType.apiValue,
+        projectId = projectId,
+        consentGiven = consentGiven,
+        sourcePage = sourcePage,
+        website = null,
+    )
+}
+
+fun ContactInquiryResponseDto.toDomain(): ContactInquirySubmissionResult {
+    return ContactInquirySubmissionResult(
+        message = message,
+    )
 }
