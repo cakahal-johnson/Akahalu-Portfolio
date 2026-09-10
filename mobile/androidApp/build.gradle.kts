@@ -14,6 +14,22 @@ android {
 
         versionCode = 1
         versionName = "0.1.0"
+
+        buildConfigField(
+            "String",
+            "API_BASE_URL",
+            "\"http://192.168.0.75:8000/api/v1/\"",
+        )
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField(
+                "String",
+                "API_BASE_URL",
+                "\"http://192.168.0.75:8000/api/v1/\"",
+            )
+        }
     }
 
     buildFeatures {
