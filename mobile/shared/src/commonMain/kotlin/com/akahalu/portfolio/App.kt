@@ -17,6 +17,7 @@ import com.akahalu.portfolio.core.designsystem.theme.AkahaluPortfolioTheme
 import com.akahalu.portfolio.core.navigation.AppDestination
 import com.akahalu.portfolio.core.navigation.AppNavigator
 import com.akahalu.portfolio.core.network.NetworkConfig
+import com.akahalu.portfolio.core.platform.ExternalUrlLauncher
 import com.akahalu.portfolio.domain.portfolio.model.ContactInquiryType
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
 import com.akahalu.portfolio.presentation.contact.ContactScreen
@@ -40,6 +41,7 @@ import kotlinx.coroutines.CoroutineScope
 @Composable
 fun App(
     networkConfig: NetworkConfig,
+    externalUrlLauncher: ExternalUrlLauncher,
 ) {
     AkahaluPortfolioTheme {
         val dependencies = remember(networkConfig) {
@@ -130,6 +132,7 @@ fun App(
             portfolioUiState = portfolioUiState,
             portfolioRepository = dependencies.portfolioRepository,
             scope = scope,
+            externalUrlLauncher = externalUrlLauncher,
             onTopLevelDestinationSelected = {
                 navigator.navigateToTopLevel(it)
             },
@@ -161,6 +164,7 @@ private fun AppContent(
     portfolioUiState: PortfolioUiState,
     portfolioRepository: PortfolioRepository,
     scope: CoroutineScope,
+    externalUrlLauncher: ExternalUrlLauncher,
     onTopLevelDestinationSelected: (AppDestination) -> Unit,
     onProjectSelected: (String) -> Unit,
     onBackFromProjectDetail: () -> Unit,
@@ -225,6 +229,7 @@ private fun AppContent(
                         slug = destination.slug,
                         repository = portfolioRepository,
                         scope = scope,
+                        externalUrlLauncher = externalUrlLauncher,
                         onBack = onBackFromProjectDetail,
                     )
                 }
@@ -265,6 +270,7 @@ private fun ProjectDetailRoute(
     slug: String,
     repository: PortfolioRepository,
     scope: CoroutineScope,
+    externalUrlLauncher: ExternalUrlLauncher,
     onBack: () -> Unit,
 ) {
     val viewModel = remember(
@@ -287,5 +293,6 @@ private fun ProjectDetailRoute(
     ProjectDetailScreen(
         uiState = uiState,
         onBack = onBack,
+        externalUrlLauncher = externalUrlLauncher,
     )
 }

@@ -18,10 +18,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.akahalu.portfolio.core.designsystem.tokens.AkahaluSpacing
+import com.akahalu.portfolio.core.platform.ExternalUrlLauncher
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.presentation.components.SkeletonBox
 import com.akahalu.portfolio.presentation.components.SkeletonText
@@ -30,6 +32,7 @@ import com.akahalu.portfolio.presentation.components.SkeletonText
 fun ProjectDetailScreen(
     uiState: ProjectDetailUiState,
     onBack: () -> Unit,
+    externalUrlLauncher: ExternalUrlLauncher,
     modifier: Modifier = Modifier,
 ) {
     AnimatedContent(
@@ -56,6 +59,7 @@ fun ProjectDetailScreen(
                 ProjectDetailContent(
                     project = state.project,
                     onBack = onBack,
+                    externalUrlLauncher = externalUrlLauncher,
                 )
             }
         }
@@ -219,6 +223,7 @@ private fun ProjectDetailError(
 private fun ProjectDetailContent(
     project: Project,
     onBack: () -> Unit,
+    externalUrlLauncher: ExternalUrlLauncher,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -307,25 +312,63 @@ private fun ProjectDetailContent(
             )
         }
 
-        project.repositoryUrl?.let { repositoryUrl ->
-            DetailSection(
-                title = "Repository",
-                content = repositoryUrl,
-            )
-        }
+        ProjectExternalLinks(
+            project = project,
+            externalUrlLauncher = externalUrlLauncher,
+        )
+    }
+}
 
-        project.liveUrl?.let { liveUrl ->
-            DetailSection(
-                title = "Live Project",
-                content = liveUrl,
-            )
-        }
+@Composable
+private fun ProjectExternalLinks(
+    project: Project,
+    externalUrlLauncher: ExternalUrlLauncher,
+) {
+    val links = buildList {
+        project.repositoryUrl
+            ?.takeIf { it.isNotBlank() }
+            ?.let {
+                add("Repository" to it)
+            }
 
-        project.caseStudyUrl?.let { caseStudyUrl ->
-            DetailSection(
-                title = "Case Study",
-                content = caseStudyUrl,
-            )
+        project.liveUrl
+            ?.takeIf { it.isNotBlank() }
+            ?.let {
+                add("Live Project" to it)
+            }
+
+        project.caseStudyUrl
+            ?.takeIf { it.isNotBlank() }
+            ?.let {
+                add("Case Study" to it)
+            }
+    }
+
+    if (links.isEmpty()) {
+        return
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        Text(
+            text = "Project Links",
+            style = MaterialTheme.typography.titleMedium,
+        )
+
+        links.forEach { (label, url) ->
+            TextButton(
+                onClick = {
+                    externalUrlLauncher.openUrl(url)
+                },
+            ) {
+                Text(
+                    text = label,
+                )
+            }
         }
     }
 }
