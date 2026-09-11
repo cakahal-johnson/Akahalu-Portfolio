@@ -143,6 +143,7 @@ fun App(
                 navigator.goBack()
             },
             experienceUiState = experienceUiState,
+            onExperienceRetry = experienceViewModel::loadExperiences,
             skillsUiState = skillsUiState,
             contactUiState = contactUiState,
             onContactNameChange = contactViewModel::updateName,
@@ -169,6 +170,7 @@ private fun AppContent(
     onProjectSelected: (String) -> Unit,
     onBackFromProjectDetail: () -> Unit,
     experienceUiState: ExperienceUiState,
+    onExperienceRetry: () -> Unit,
     skillsUiState: SkillsUiState,
     contactUiState: ContactUiState,
     onContactNameChange: (String) -> Unit,
@@ -237,6 +239,8 @@ private fun AppContent(
                 AppDestination.Experience -> {
                     ExperienceScreen(
                         uiState = experienceUiState,
+                        externalUrlLauncher = externalUrlLauncher,
+                        onRetry = onExperienceRetry,
                     )
                 }
 
