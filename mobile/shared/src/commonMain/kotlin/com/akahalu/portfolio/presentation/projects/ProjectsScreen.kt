@@ -1,5 +1,9 @@
 package com.akahalu.portfolio.presentation.projects
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,8 +18,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.akahalu.portfolio.core.designsystem.tokens.AkahaluSpacing
 import com.akahalu.portfolio.domain.portfolio.model.Project
+import com.akahalu.portfolio.presentation.components.SkeletonCard
+import com.akahalu.portfolio.presentation.components.SkeletonText
 import com.akahalu.portfolio.presentation.portfolio.PortfolioUiState
 
 @Composable
@@ -24,29 +31,97 @@ fun ProjectsScreen(
     onProjectSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (uiState) {
-        PortfolioUiState.Loading -> {
-            Text(
-                text = "Loading projects...",
-                modifier = modifier.padding(AkahaluSpacing.Large),
-            )
+    AnimatedContent(
+        targetState = uiState,
+        modifier = modifier.fillMaxSize(),
+        transitionSpec = {
+            fadeIn() togetherWith fadeOut()
+        },
+        label = "projects-content",
+    ) { state ->
+        when (state) {
+            PortfolioUiState.Loading -> {
+                ProjectsLoading()
+            }
+
+            is PortfolioUiState.Error -> {
+                ProjectsError(
+                    message = state.message,
+                )
+            }
+
+            is PortfolioUiState.Success -> {
+                ProjectList(
+                    projects = state.projectPage.items,
+                    onProjectSelected = onProjectSelected,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProjectsLoading(
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
+        ),
+        contentPadding = PaddingValues(
+            AkahaluSpacing.Large,
+        ),
+    ) {
+        item {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                SkeletonText(
+                    width = 150.dp,
+                    height = 28.dp,
+                )
+
+                SkeletonText(
+                    width = 240.dp,
+                    height = 16.dp,
+                )
+            }
         }
 
-        is PortfolioUiState.Error -> {
-            Text(
-                text = uiState.message,
-                modifier = modifier.padding(AkahaluSpacing.Large),
-                color = MaterialTheme.colorScheme.error,
-            )
+        items(
+            count = 6,
+        ) {
+            SkeletonCard()
         }
+    }
+}
 
-        is PortfolioUiState.Success -> {
-            ProjectList(
-                projects = uiState.projectPage.items,
-                onProjectSelected = onProjectSelected,
-                modifier = modifier,
-            )
-        }
+@Composable
+private fun ProjectsError(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(AkahaluSpacing.Large),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        Text(
+            text = "Unable to load projects",
+            style = MaterialTheme.typography.headlineSmall,
+        )
+
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.error,
+        )
     }
 }
 
@@ -57,9 +132,8 @@ private fun ProjectList(
     modifier: Modifier = Modifier,
 ) {
     if (projects.isEmpty()) {
-        Text(
-            text = "No projects available.",
-            modifier = modifier.padding(AkahaluSpacing.Large),
+        ProjectEmptyState(
+            modifier = modifier,
         )
         return
     }
@@ -88,6 +162,31 @@ private fun ProjectList(
 }
 
 @Composable
+private fun ProjectEmptyState(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(AkahaluSpacing.Large),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        Text(
+            text = "No projects available",
+            style = MaterialTheme.typography.headlineSmall,
+        )
+
+        Text(
+            text = "There are currently no portfolio projects to display.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun ProjectCard(
     project: Project,
     onClick: () -> Unit,
@@ -96,6 +195,7 @@ private fun ProjectCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Column(
             modifier = Modifier.padding(AkahaluSpacing.Large),
