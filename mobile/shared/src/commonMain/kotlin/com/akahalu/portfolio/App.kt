@@ -200,6 +200,16 @@ private fun AppContent(
                     HomeScreen(
                         uiState = portfolioUiState,
                         onProjectSelected = onProjectSelected,
+                        onViewProjects = {
+                            onTopLevelDestinationSelected(
+                                AppDestination.Projects,
+                            )
+                        },
+                        onContact = {
+                            onTopLevelDestinationSelected(
+                                AppDestination.Contact,
+                            )
+                        },
                     )
                 }
 

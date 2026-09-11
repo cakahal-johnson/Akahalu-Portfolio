@@ -23,10 +23,12 @@ class PortfolioViewModel(
             _uiState.value = PortfolioUiState.Loading
 
             runCatching {
+                val profile = repository.getProfile()
                 val featuredProjects = repository.getFeaturedProjects()
                 val projectPage = repository.getProjects()
 
                 PortfolioUiState.Success(
+                    profile = profile,
                     featuredProjects = featuredProjects,
                     projectPage = projectPage,
                 )
