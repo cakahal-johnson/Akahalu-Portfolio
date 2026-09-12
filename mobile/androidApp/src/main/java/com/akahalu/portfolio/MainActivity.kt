@@ -5,10 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.akahalu.portfolio.core.network.NetworkConfig
 import com.akahalu.portfolio.core.platform.AndroidExternalUrlLauncher
+import com.akahalu.portfolio.data.portfolio.cache.AndroidPortfolioCacheStorage
 
 class MainActivity : ComponentActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(
+        savedInstanceState: Bundle?,
+    ) {
         super.onCreate(savedInstanceState)
 
         val networkConfig = NetworkConfig(
@@ -19,10 +22,15 @@ class MainActivity : ComponentActivity() {
             context = applicationContext,
         )
 
+        val cacheStorage = AndroidPortfolioCacheStorage(
+            context = applicationContext,
+        )
+
         setContent {
             App(
                 networkConfig = networkConfig,
                 externalUrlLauncher = externalUrlLauncher,
+                cacheStorage = cacheStorage,
             )
         }
     }

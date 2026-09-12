@@ -37,15 +37,23 @@ import com.akahalu.portfolio.presentation.skills.SkillsScreen
 import com.akahalu.portfolio.presentation.skills.SkillsUiState
 import com.akahalu.portfolio.presentation.skills.SkillsViewModel
 import kotlinx.coroutines.CoroutineScope
+import com.akahalu.portfolio.data.portfolio.cache.PortfolioCacheStorage
 
 @Composable
 fun App(
     networkConfig: NetworkConfig,
     externalUrlLauncher: ExternalUrlLauncher,
+    cacheStorage: PortfolioCacheStorage,
 ) {
     AkahaluPortfolioTheme {
-        val dependencies = remember(networkConfig) {
-            PortfolioDependencies(networkConfig)
+        val dependencies = remember(
+            networkConfig,
+            cacheStorage,
+        ) {
+            PortfolioDependencies(
+                networkConfig = networkConfig,
+                cacheStorage = cacheStorage,
+            )
         }
 
         DisposableEffect(dependencies) {

@@ -1,7 +1,16 @@
 package com.akahalu.portfolio.data.portfolio.repository
 
+import com.akahalu.portfolio.data.portfolio.cache.JsonPortfolioCache
+import com.akahalu.portfolio.data.portfolio.dto.ExperienceListResponseDto
+import com.akahalu.portfolio.data.portfolio.dto.ProfileDto
+import com.akahalu.portfolio.data.portfolio.dto.ProjectListResponseDto
+import com.akahalu.portfolio.data.portfolio.dto.ProjectSummaryDto
+import com.akahalu.portfolio.data.portfolio.dto.ProjectTechnologyDto
 import com.akahalu.portfolio.data.portfolio.mapper.toDomain
+import com.akahalu.portfolio.data.portfolio.mapper.toDto
 import com.akahalu.portfolio.data.portfolio.remote.PortfolioRemoteDataSource
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
+import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperiencePage
 import com.akahalu.portfolio.domain.portfolio.model.Profile
@@ -10,12 +19,10 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectCategory
 import com.akahalu.portfolio.domain.portfolio.model.ProjectPage
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
-import com.akahalu.portfolio.data.portfolio.mapper.toDto
-import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmission
-import com.akahalu.portfolio.domain.portfolio.model.ContactInquirySubmissionResult
 
 class PortfolioRepositoryImpl(
     private val remoteDataSource: PortfolioRemoteDataSource,
+    private val cache: JsonPortfolioCache,
 ) : PortfolioRepository {
 
     override suspend fun getCategories(): List<ProjectCategory> {
@@ -35,9 +42,30 @@ class PortfolioRepositoryImpl(
     override suspend fun getTechnologies(
         category: String?,
     ): List<ProjectTechnology> {
-        return remoteDataSource
-            .getTechnologies(category)
-            .map { it.toDomain() }
+        val cacheKey = technologiesCacheKey(category)
+
+        return runCatching {
+            val remoteData = remoteDataSource
+                .getTechnologies(category)
+
+            cache.save(
+                key = cacheKey,
+                value = remoteData,
+                serializer = kotlinx.serialization.builtins.ListSerializer(
+                    ProjectTechnologyDto.serializer(),
+                ),
+            )
+
+            remoteData.map { it.toDomain() }
+        }.getOrElse { exception ->
+            cache.get(
+                key = cacheKey,
+                serializer = kotlinx.serialization.builtins.ListSerializer(
+                    ProjectTechnologyDto.serializer(),
+                ),
+            )?.map { it.toDomain() }
+                ?: throw exception
+        }
     }
 
     override suspend fun getTechnology(
@@ -56,8 +84,17 @@ class PortfolioRepositoryImpl(
         technologySlug: String?,
         isFeatured: Boolean?,
     ): ProjectPage {
-        return remoteDataSource
-            .getProjects(
+        val cacheKey = projectsCacheKey(
+            page = page,
+            pageSize = pageSize,
+            search = search,
+            categorySlug = categorySlug,
+            technologySlug = technologySlug,
+            isFeatured = isFeatured,
+        )
+
+        return runCatching {
+            val remoteData = remoteDataSource.getProjects(
                 page = page,
                 pageSize = pageSize,
                 search = search,
@@ -65,15 +102,50 @@ class PortfolioRepositoryImpl(
                 technologySlug = technologySlug,
                 isFeatured = isFeatured,
             )
-            .toDomain()
+
+            cache.save(
+                key = cacheKey,
+                value = remoteData,
+                serializer = ProjectListResponseDto.serializer(),
+            )
+
+            remoteData.toDomain()
+        }.getOrElse { exception ->
+            cache.get(
+                key = cacheKey,
+                serializer = ProjectListResponseDto.serializer(),
+            )?.toDomain()
+                ?: throw exception
+        }
     }
 
     override suspend fun getFeaturedProjects(
         limit: Int,
     ): List<Project> {
-        return remoteDataSource
-            .getFeaturedProjects(limit)
-            .map { it.toDomain() }
+        val cacheKey = "featured_projects_$limit"
+
+        return runCatching {
+            val remoteData = remoteDataSource
+                .getFeaturedProjects(limit)
+
+            cache.save(
+                key = cacheKey,
+                value = remoteData,
+                serializer = kotlinx.serialization.builtins.ListSerializer(
+                    ProjectSummaryDto.serializer(),
+                ),
+            )
+
+            remoteData.map { it.toDomain() }
+        }.getOrElse { exception ->
+            cache.get(
+                key = cacheKey,
+                serializer = kotlinx.serialization.builtins.ListSerializer(
+                    ProjectSummaryDto.serializer(),
+                ),
+            )?.map { it.toDomain() }
+                ?: throw exception
+        }
     }
 
     override suspend fun getProject(
@@ -93,8 +165,18 @@ class PortfolioRepositoryImpl(
         isCurrent: Boolean?,
         isFeatured: Boolean?,
     ): ExperiencePage {
-        return remoteDataSource
-            .getExperiences(
+        val cacheKey = experiencesCacheKey(
+            page = page,
+            pageSize = pageSize,
+            search = search,
+            employmentType = employmentType,
+            locationType = locationType,
+            isCurrent = isCurrent,
+            isFeatured = isFeatured,
+        )
+
+        return runCatching {
+            val remoteData = remoteDataSource.getExperiences(
                 page = page,
                 pageSize = pageSize,
                 search = search,
@@ -103,7 +185,21 @@ class PortfolioRepositoryImpl(
                 isCurrent = isCurrent,
                 isFeatured = isFeatured,
             )
-            .toDomain()
+
+            cache.save(
+                key = cacheKey,
+                value = remoteData,
+                serializer = ExperienceListResponseDto.serializer(),
+            )
+
+            remoteData.toDomain()
+        }.getOrElse { exception ->
+            cache.get(
+                key = cacheKey,
+                serializer = ExperienceListResponseDto.serializer(),
+            )?.toDomain()
+                ?: throw exception
+        }
     }
 
     override suspend fun getFeaturedExperiences(
@@ -123,9 +219,25 @@ class PortfolioRepositoryImpl(
     }
 
     override suspend fun getProfile(): Profile {
-        return remoteDataSource
-            .getProfile()
-            .toDomain()
+        val cacheKey = "profile"
+
+        return runCatching {
+            val remoteData = remoteDataSource.getProfile()
+
+            cache.save(
+                key = cacheKey,
+                value = remoteData,
+                serializer = ProfileDto.serializer(),
+            )
+
+            remoteData.toDomain()
+        }.getOrElse { exception ->
+            cache.get(
+                key = cacheKey,
+                serializer = ProfileDto.serializer(),
+            )?.toDomain()
+                ?: throw exception
+        }
     }
 
     override suspend fun submitContactInquiry(
@@ -136,5 +248,51 @@ class PortfolioRepositoryImpl(
                 submission.toDto(),
             )
             .toDomain()
+    }
+
+    private fun technologiesCacheKey(
+        category: String?,
+    ): String {
+        return "technologies_${category ?: "all"}"
+    }
+
+    private fun projectsCacheKey(
+        page: Int,
+        pageSize: Int,
+        search: String?,
+        categorySlug: String?,
+        technologySlug: String?,
+        isFeatured: Boolean?,
+    ): String {
+        return listOf(
+            "projects",
+            page,
+            pageSize,
+            search ?: "",
+            categorySlug ?: "",
+            technologySlug ?: "",
+            isFeatured?.toString() ?: "",
+        ).joinToString("_")
+    }
+
+    private fun experiencesCacheKey(
+        page: Int,
+        pageSize: Int,
+        search: String?,
+        employmentType: String?,
+        locationType: String?,
+        isCurrent: Boolean?,
+        isFeatured: Boolean?,
+    ): String {
+        return listOf(
+            "experiences",
+            page,
+            pageSize,
+            search ?: "",
+            employmentType ?: "",
+            locationType ?: "",
+            isCurrent?.toString() ?: "",
+            isFeatured?.toString() ?: "",
+        ).joinToString("_")
     }
 }
