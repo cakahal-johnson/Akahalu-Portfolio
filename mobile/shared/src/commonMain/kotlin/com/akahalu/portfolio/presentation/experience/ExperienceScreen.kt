@@ -1,5 +1,8 @@
 package com.akahalu.portfolio.presentation.experience
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,10 +30,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.akahalu.portfolio.core.designsystem.tokens.AkahaluSpacing
@@ -40,6 +49,7 @@ import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperienceLocationType
 import com.akahalu.portfolio.presentation.components.SkeletonCard
 import com.akahalu.portfolio.presentation.components.SkeletonText
+import kotlinx.coroutines.delay
 
 @Composable
 fun ExperienceScreen(
@@ -91,27 +101,14 @@ private fun ExperienceContent(
             AkahaluSpacing.Medium,
         ),
         contentPadding = PaddingValues(
-            horizontal = AkahaluSpacing.Large,
+            horizontal = AkahaluSpacing.Medium,
             vertical = AkahaluSpacing.Large,
         ),
     ) {
         item {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(
-                    AkahaluSpacing.Small,
-                ),
-            ) {
-                Text(
-                    text = "Experience",
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-
-                Text(
-                    text = "A summary of my professional journey, roles, and the work I have contributed to.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            ExperienceHeader(
+                experienceCount = experiences.size,
+            )
         }
 
         itemsIndexed(
@@ -130,29 +127,75 @@ private fun ExperienceContent(
 }
 
 @Composable
+private fun ExperienceHeader(
+    experienceCount: Int,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        Text(
+            text = "Professional Experience",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            text = "A timeline of the roles, companies, and technical work that shaped my professional journey.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
+        Text(
+            text = "$experienceCount role${if (experienceCount == 1) "" else "s"}",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
 private fun ExperienceTimelineItem(
     experience: Experience,
     isLast: Boolean,
     externalUrlLauncher: ExternalUrlLauncher,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        horizontalArrangement = Arrangement.spacedBy(
-            AkahaluSpacing.Medium,
-        ),
-        verticalAlignment = Alignment.Top,
-    ) {
-        ExperienceTimelineRail(
-            isLast = isLast,
-        )
+    var visible by remember {
+        mutableStateOf(false)
+    }
 
-        ExperienceCard(
-            experience = experience,
-            externalUrlLauncher = externalUrlLauncher,
-            modifier = Modifier.weight(1f),
-        )
+    LaunchedEffect(experience.id) {
+        delay(80)
+        visible = true
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn() + slideInVertically(
+            initialOffsetY = { 24 },
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+            horizontalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Medium,
+            ),
+            verticalAlignment = Alignment.Top,
+        ) {
+            ExperienceTimelineRail(
+                isLast = isLast,
+            )
+
+            ExperienceCard(
+                experience = experience,
+                externalUrlLauncher = externalUrlLauncher,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
@@ -196,9 +239,9 @@ private fun ExperienceCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 2.dp,
@@ -206,13 +249,13 @@ private fun ExperienceCard(
     ) {
         Column(
             modifier = Modifier.padding(
-                AkahaluSpacing.Large,
+                AkahaluSpacing.Medium,
             ),
             verticalArrangement = Arrangement.spacedBy(
                 AkahaluSpacing.Medium,
             ),
         ) {
-            ExperienceHeader(
+            ExperienceCardHeader(
                 experience = experience,
             )
 
@@ -220,11 +263,11 @@ private fun ExperienceCard(
                 experience = experience,
             )
 
+            ExperienceDivider()
+
             if (experience.summary.isNotBlank()) {
-                Text(
-                    text = experience.summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                ExperienceSummary(
+                    summary = experience.summary,
                 )
             }
 
@@ -249,68 +292,78 @@ private fun ExperienceCard(
             experience.companyWebsite
                 ?.takeIf { it.isNotBlank() }
                 ?.let { website ->
-                    TextButton(
-                        onClick = {
-                            externalUrlLauncher.openUrl(website)
-                        },
-                    ) {
-                        Text(
-                            text = "Visit company website",
-                        )
-                    }
+                    ExperienceWebsiteAction(
+                        website = website,
+                        externalUrlLauncher = externalUrlLauncher,
+                    )
                 }
         }
     }
 }
 
 @Composable
-private fun ExperienceHeader(
+private fun ExperienceCardHeader(
     experience: Experience,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(
-            AkahaluSpacing.Small,
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
         ),
+        verticalAlignment = Alignment.Top,
     ) {
-        Text(
-            text = experience.jobTitle,
-            style = MaterialTheme.typography.titleLarge,
-        )
+        experience.companyLogoUrl
+            ?.takeIf { it.isNotBlank() }
+            ?.let { logoUrl ->
+                CompanyLogo(
+                    url = logoUrl,
+                    companyName = experience.companyName,
+                )
+            }
+            ?: CompanyLogoFallback(
+                companyName = experience.companyName,
+            )
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                AkahaluSpacing.Small,
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.ExtraSmall,
             ),
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            experience.companyLogoUrl
-                ?.takeIf { it.isNotBlank() }
-                ?.let { logoUrl ->
-                    CompanyLogo(
-                        url = logoUrl,
-                        companyName = experience.companyName,
-                    )
-                }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(
-                    AkahaluSpacing.ExtraSmall,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
                 ),
+                verticalAlignment = Alignment.Top,
             ) {
                 Text(
-                    text = experience.companyName,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
+                    text = experience.jobTitle,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
                 )
 
-                if (experience.isCurrent) {
-                    StatusBadge(
-                        text = "Current",
-                        emphasized = true,
+                if (experience.isFeatured) {
+                    ExperienceBadge(
+                        text = "Featured",
+                        emphasized = false,
                     )
                 }
+            }
+
+            Text(
+                text = experience.companyName,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            if (experience.isCurrent) {
+                ExperienceBadge(
+                    text = "Current",
+                    emphasized = true,
+                )
             }
         }
     }
@@ -338,22 +391,48 @@ private fun CompanyLogo(
             )
         },
         error = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = companyInitials(companyName),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
-            }
+            CompanyLogoFallbackContent(
+                companyName = companyName,
+            )
         },
     )
+}
+
+@Composable
+private fun CompanyLogoFallback(
+    companyName: String,
+) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(MaterialTheme.shapes.medium),
+        contentAlignment = Alignment.Center,
+    ) {
+        CompanyLogoFallbackContent(
+            companyName = companyName,
+        )
+    }
+}
+
+@Composable
+private fun CompanyLogoFallbackContent(
+    companyName: String,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                MaterialTheme.colorScheme.primaryContainer,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = companyInitials(companyName),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+    }
 }
 
 @Composable
@@ -367,8 +446,9 @@ private fun ExperienceMeta(
     ) {
         Text(
             text = formatDateRange(experience),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold,
         )
 
         Row(
@@ -377,41 +457,30 @@ private fun ExperienceMeta(
                 AkahaluSpacing.Small,
             ),
         ) {
-            MetaBadge(
+            ExperienceMetaBadge(
                 text = formatEmploymentType(
                     experience.employmentType,
                 ),
                 modifier = Modifier.weight(1f),
             )
 
-            MetaBadge(
+            ExperienceMetaBadge(
                 text = formatLocation(experience),
                 modifier = Modifier.weight(1f),
             )
-        }
-
-        if (experience.isFeatured) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                StatusBadge(
-                    text = "Featured",
-                    emphasized = false,
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun MetaBadge(
+private fun ExperienceMetaBadge(
     text: String,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.secondaryContainer,
     ) {
         Text(
             text = text,
@@ -419,39 +488,79 @@ private fun MetaBadge(
                 .fillMaxWidth()
                 .padding(
                     horizontal = 10.dp,
-                    vertical = 6.dp,
+                    vertical = 7.dp,
                 ),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            fontWeight = FontWeight.Medium,
         )
     }
 }
 
 @Composable
-private fun StatusBadge(
+private fun ExperienceBadge(
     text: String,
     emphasized: Boolean,
 ) {
     Surface(
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(50),
         color = if (emphasized) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.secondaryContainer
+            MaterialTheme.colorScheme.surfaceVariant
         },
     ) {
         Text(
             text = text,
             modifier = Modifier.padding(
-                horizontal = 8.dp,
+                horizontal = 10.dp,
                 vertical = 5.dp,
             ),
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = if (emphasized) {
                 MaterialTheme.colorScheme.onPrimaryContainer
             } else {
-                MaterialTheme.colorScheme.onSecondaryContainer
+                MaterialTheme.colorScheme.onSurfaceVariant
             },
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun ExperienceDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(
+                MaterialTheme.colorScheme.outlineVariant.copy(
+                    alpha = 0.5f,
+                ),
+            ),
+    )
+}
+
+@Composable
+private fun ExperienceSummary(
+    summary: String,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        Text(
+            text = "Overview",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+        )
+
+        Text(
+            text = summary,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }
@@ -485,6 +594,7 @@ private fun ExperienceSection(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
         )
 
         Column(
@@ -532,6 +642,28 @@ private fun ExperienceBulletPoint(
 }
 
 @Composable
+private fun ExperienceWebsiteAction(
+    website: String,
+    externalUrlLauncher: ExternalUrlLauncher,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End,
+    ) {
+        TextButton(
+            onClick = {
+                externalUrlLauncher.openUrl(website)
+            },
+        ) {
+            Text(
+                text = "Visit company →",
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ExperienceLoading(
     modifier: Modifier = Modifier,
 ) {
@@ -541,7 +673,7 @@ private fun ExperienceLoading(
             AkahaluSpacing.Medium,
         ),
         contentPadding = PaddingValues(
-            horizontal = AkahaluSpacing.Large,
+            horizontal = AkahaluSpacing.Medium,
             vertical = AkahaluSpacing.Large,
         ),
     ) {
@@ -552,13 +684,18 @@ private fun ExperienceLoading(
                 ),
             ) {
                 SkeletonText(
-                    width = 140.dp,
+                    width = 220.dp,
                     height = 32.dp,
                 )
 
                 SkeletonText(
-                    width = null,
+                    width = 320.dp,
                     height = 18.dp,
+                )
+
+                SkeletonText(
+                    width = 90.dp,
+                    height = 16.dp,
                 )
             }
         }
@@ -585,6 +722,7 @@ private fun ExperienceError(
         Text(
             text = "Unable to load experience",
             style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(
@@ -602,7 +740,10 @@ private fun ExperienceError(
         TextButton(
             onClick = onRetry,
         ) {
-            Text(text = "Retry")
+            Text(
+                text = "Retry",
+                fontWeight = FontWeight.SemiBold,
+            )
         }
     }
 }
@@ -621,6 +762,7 @@ private fun ExperienceEmpty(
         Text(
             text = "No experience available",
             style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
         )
 
         Spacer(
@@ -673,7 +815,7 @@ private fun formatDateRange(
         experience.endDate ?: "Present"
     }
 
-    return "${experience.startDate} - $end"
+    return "${experience.startDate} — $end"
 }
 
 private fun formatEmploymentType(
