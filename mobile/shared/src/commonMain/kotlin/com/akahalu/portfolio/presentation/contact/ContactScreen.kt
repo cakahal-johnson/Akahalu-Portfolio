@@ -1,35 +1,62 @@
 package com.akahalu.portfolio.presentation.contact
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.akahalu.portfolio.core.designsystem.tokens.AkahaluSpacing
+import com.akahalu.portfolio.core.platform.ExternalUrlLauncher
 import com.akahalu.portfolio.domain.portfolio.model.ContactInquiryType
 import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.ProfileAvailabilityStatus
+import com.akahalu.portfolio.presentation.components.SkeletonCard
+import com.akahalu.portfolio.presentation.components.SkeletonText
 
 @Composable
 fun ContactScreen(
     uiState: ContactUiState,
+    externalUrlLauncher: ExternalUrlLauncher,
     onNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
@@ -49,6 +76,7 @@ fun ContactScreen(
             ContactContent(
                 profile = uiState.profile,
                 form = uiState.form,
+                externalUrlLauncher = externalUrlLauncher,
                 onNameChange = onNameChange,
                 onEmailChange = onEmailChange,
                 onPhoneChange = onPhoneChange,
@@ -71,13 +99,47 @@ fun ContactScreen(
 
 @Composable
 private fun ContactLoading() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            AkahaluSpacing.Medium,
+        ),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
+        ),
     ) {
-        CircularProgressIndicator()
+        item {
+            SkeletonText(
+                width = 170.dp,
+                height = 34.dp,
+            )
+        }
+
+        item {
+            SkeletonText(
+                width = 240.dp,
+                height = 20.dp,
+            )
+        }
+
+        item {
+            SkeletonText(
+                width = null,
+                height = 16.dp,
+            )
+        }
+
+        item {
+            SkeletonCard()
+        }
+
+        item {
+            SkeletonCard()
+        }
+
+        item {
+            SkeletonCard()
+        }
     }
 }
 
@@ -85,22 +147,41 @@ private fun ContactLoading() {
 private fun ContactError(
     message: String,
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+            .padding(AkahaluSpacing.Large),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = "Unable to load contact information.",
-            style = MaterialTheme.typography.headlineSmall,
-        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+            ),
+        ) {
+            Column(
+                modifier = Modifier.padding(
+                    AkahaluSpacing.Large,
+                ),
+                verticalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                Text(
+                    text = "Unable to load contact information",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
 
-        Text(
-            text = message,
-            modifier = Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-        )
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        }
     }
 }
 
@@ -108,6 +189,7 @@ private fun ContactError(
 private fun ContactContent(
     profile: Profile,
     form: ContactFormState,
+    externalUrlLauncher: ExternalUrlLauncher,
     onNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
@@ -120,42 +202,43 @@ private fun ContactContent(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        contentPadding = PaddingValues(
+            horizontal = AkahaluSpacing.Medium,
+            vertical = AkahaluSpacing.Large,
+        ),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
+        ),
     ) {
         item {
-            Text(
-                text = "Contact",
-                style = MaterialTheme.typography.headlineLarge,
+            ContactHero(
+                profile = profile,
             )
         }
 
         item {
-            Text(
-                text = profile.professionalTitle,
-                style = MaterialTheme.typography.titleLarge,
+            ContactStats(
+                profile = profile,
             )
         }
 
         item {
-            Text(
-                text = profile.headline,
-                style = MaterialTheme.typography.bodyLarge,
+            AvailabilityCard(
+                profile = profile,
             )
         }
 
         item {
-            AvailabilityCard(profile = profile)
+            ContactInformationCard(
+                profile = profile,
+            )
         }
 
         item {
-            ContactInformationCard(profile = profile)
-        }
-
-        item {
-            Text(
-                text = "Send a message",
-                style = MaterialTheme.typography.headlineSmall,
+            SectionHeader(
+                eyebrow = "START A CONVERSATION",
+                title = "Tell me about your project",
+                description = "Share a few details and I'll get back to you as soon as possible.",
             )
         }
 
@@ -175,37 +258,142 @@ private fun ContactContent(
         }
 
         item {
-            Text(
-                text = "About",
-                style = MaterialTheme.typography.titleLarge,
+            AboutCard(
+                profile = profile,
             )
         }
 
         item {
-            Text(
-                text = profile.shortBio,
-                style = MaterialTheme.typography.bodyLarge,
+            ProfileLinksCard(
+                profile = profile,
+                externalUrlLauncher = externalUrlLauncher,
             )
         }
 
         item {
-            Text(
-                text = profile.biography,
-                style = MaterialTheme.typography.bodyMedium,
+            Spacer(
+                modifier = Modifier.height(
+                    AkahaluSpacing.Medium,
+                ),
             )
         }
+    }
+}
 
-        if (profile.yearsOfExperience > 0) {
-            item {
-                Text(
-                    text = "${profile.yearsOfExperience} years of experience",
-                    style = MaterialTheme.typography.titleMedium,
+@Composable
+private fun ContactHero(
+    profile: Profile,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = AkahaluSpacing.Small,
+            ),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        Text(
+            text = "LET'S CONNECT",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            text = "Contact",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            text = profile.professionalTitle,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+        )
+
+        Text(
+            text = profile.headline,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun ContactStats(
+    profile: Profile,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        ContactStat(
+            value = "${profile.yearsOfExperience}+",
+            label = "Years experience",
+        )
+
+        ContactStat(
+            value = profile.availabilityStatus.shortLabel(),
+            label = "Availability",
+            compactValue = true,
+        )
+
+        profile.location
+            ?.takeIf { it.isNotBlank() }
+            ?.let { location ->
+                ContactStat(
+                    value = location,
+                    label = "Based in",
+                    compactValue = true,
                 )
             }
-        }
+    }
+}
 
-        item {
-            ProfileLinksCard(profile = profile)
+@Composable
+private fun ContactStat(
+    value: String,
+    label: String,
+    compactValue: Boolean = false,
+) {
+    Card(
+        modifier = Modifier.width(150.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                AkahaluSpacing.Medium,
+            ),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.ExtraSmall,
+            ),
+        ) {
+            Text(
+                text = value,
+                style = if (compactValue) {
+                    MaterialTheme.typography.titleMedium
+                } else {
+                    MaterialTheme.typography.headlineSmall
+                },
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+            )
+
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -214,31 +402,64 @@ private fun ContactContent(
 private fun AvailabilityCard(
     profile: Profile,
 ) {
+    val isPositive =
+        profile.availabilityStatus != ProfileAvailabilityStatus.UNAVAILABLE
+
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = if (isPositive) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainer
+            },
+        ),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AkahaluSpacing.Large),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Medium,
+            ),
         ) {
-            Text(
-                text = "Availability",
-                style = MaterialTheme.typography.titleMedium,
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .clip(CircleShape)
+                    .background(
+                        color = if (isPositive) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    ),
             )
 
-            Text(
-                text = profile.availabilityStatus.displayName(),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.ExtraSmall,
+                ),
+            ) {
+                Text(
+                    text = profile.availabilityStatus.displayName(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
 
-            profile.availabilityMessage
-                ?.takeIf { it.isNotBlank() }
-                ?.let { message ->
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
+                profile.availabilityMessage
+                    ?.takeIf { it.isNotBlank() }
+                    ?.let { message ->
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+            }
         }
     }
 }
@@ -249,14 +470,17 @@ private fun ContactInformationCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(AkahaluSpacing.Large),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Medium,
+            ),
         ) {
-            Text(
-                text = "Contact information",
-                style = MaterialTheme.typography.titleMedium,
+            SectionHeader(
+                eyebrow = "CONTACT DETAILS",
+                title = "Let's make it easy to reach me",
             )
 
             ContactField(
@@ -303,17 +527,56 @@ private fun ContactField(
     value: String,
 ) {
     Column(
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.ExtraSmall,
+        ),
     ) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
         )
 
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
         )
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    eyebrow: String,
+    title: String,
+    description: String? = null,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.ExtraSmall,
+        ),
+    ) {
+        Text(
+            text = eyebrow,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
+
+        description?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -336,10 +599,13 @@ private fun ContactFormCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.padding(AkahaluSpacing.Large),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Medium,
+            ),
         ) {
             OutlinedTextField(
                 value = form.name,
@@ -347,6 +613,9 @@ private fun ContactFormCard(
                 modifier = Modifier.fillMaxWidth(),
                 label = {
                     Text("Name")
+                },
+                placeholder = {
+                    Text("Your full name")
                 },
                 singleLine = true,
                 enabled = !form.isSubmitting,
@@ -359,61 +628,100 @@ private fun ContactFormCard(
                 label = {
                     Text("Email")
                 },
-                singleLine = true,
-                enabled = !form.isSubmitting,
-            )
-
-            OutlinedTextField(
-                value = form.phone,
-                onValueChange = onPhoneChange,
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Phone")
+                placeholder = {
+                    Text("you@example.com")
                 },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                ),
                 singleLine = true,
                 enabled = !form.isSubmitting,
             )
 
-            OutlinedTextField(
-                value = form.company,
-                onValueChange = onCompanyChange,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Company")
-                },
-                singleLine = true,
-                enabled = !form.isSubmitting,
-            )
+                horizontalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                OutlinedTextField(
+                    value = form.phone,
+                    onValueChange = onPhoneChange,
+                    modifier = Modifier.weight(1f),
+                    label = {
+                        Text("Phone")
+                    },
+                    singleLine = true,
+                    enabled = !form.isSubmitting,
+                )
 
-            Column {
-                TextButton(
-                    onClick = {
-                        if (!form.isSubmitting) {
-                            inquiryMenuExpanded = true
+                OutlinedTextField(
+                    value = form.company,
+                    onValueChange = onCompanyChange,
+                    modifier = Modifier.weight(1f),
+                    label = {
+                        Text("Company")
+                    },
+                    singleLine = true,
+                    enabled = !form.isSubmitting,
+                )
+            }
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.ExtraSmall,
+                ),
+            ) {
+                Text(
+                    text = "Inquiry type",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+
+                Box {
+                    TextButton(
+                        onClick = {
+                            if (!form.isSubmitting) {
+                                inquiryMenuExpanded = true
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = form.inquiryType.displayName,
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+
+                            Text(
+                                text = "▼",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
                         }
-                    },
-                ) {
-                    Text(
-                        text = "Inquiry type: ${form.inquiryType.displayName}",
-                    )
-                }
+                    }
 
-                DropdownMenu(
-                    expanded = inquiryMenuExpanded,
-                    onDismissRequest = {
-                        inquiryMenuExpanded = false
-                    },
-                ) {
-                    ContactInquiryType.entries.forEach { type ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(type.displayName)
-                            },
-                            onClick = {
-                                inquiryMenuExpanded = false
-                                onInquiryTypeChange(type)
-                            },
-                        )
+                    DropdownMenu(
+                        expanded = inquiryMenuExpanded,
+                        onDismissRequest = {
+                            inquiryMenuExpanded = false
+                        },
+                    ) {
+                        ContactInquiryType.entries.forEach { type ->
+                            DropdownMenuItem(
+                                text = {
+                                    Text(type.displayName)
+                                },
+                                onClick = {
+                                    inquiryMenuExpanded = false
+                                    onInquiryTypeChange(type)
+                                },
+                            )
+                        }
                     }
                 }
             }
@@ -424,6 +732,9 @@ private fun ContactFormCard(
                 modifier = Modifier.fillMaxWidth(),
                 label = {
                     Text("Subject")
+                },
+                placeholder = {
+                    Text("How can I help?")
                 },
                 singleLine = true,
                 enabled = !form.isSubmitting,
@@ -436,63 +747,75 @@ private fun ContactFormCard(
                 label = {
                     Text("Message")
                 },
-                minLines = 5,
+                placeholder = {
+                    Text(
+                        "Tell me about your project, opportunity or question...",
+                    )
+                },
+                minLines = 6,
                 enabled = !form.isSubmitting,
+                supportingText = {
+                    Text(
+                        text = "${form.message.length} characters",
+                    )
+                },
             )
 
-            TextButton(
-                onClick = {
-                    onConsentChange(!form.consentGiven)
-                },
-                enabled = !form.isSubmitting,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
+                Checkbox(
+                    checked = form.consentGiven,
+                    onCheckedChange = onConsentChange,
+                    enabled = !form.isSubmitting,
+                )
+
+                Spacer(
+                    modifier = Modifier.width(
+                        AkahaluSpacing.Small,
+                    ),
+                )
+
                 Text(
-                    text = if (form.consentGiven) {
-                        "[x] I agree to be contacted regarding this inquiry."
-                    } else {
-                        "[ ] I agree to be contacted regarding this inquiry."
-                    },
+                    text = "I agree to be contacted regarding this inquiry.",
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
 
-            form.validationError
-                ?.takeIf { it.isNotBlank() }
-                ?.let { error ->
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
+            FormMessage(
+                message = form.validationError,
+                isError = true,
+            )
 
-            form.submissionError
-                ?.takeIf { it.isNotBlank() }
-                ?.let { error ->
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
+            FormMessage(
+                message = form.submissionError,
+                isError = true,
+            )
 
-            form.submissionMessage
-                ?.takeIf { it.isNotBlank() }
-                ?.let { message ->
-                    Text(
-                        text = message,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
+            FormMessage(
+                message = form.submissionMessage,
+                isError = false,
+            )
 
             Button(
                 onClick = onSubmit,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
                 enabled = !form.isSubmitting,
+                shape = RoundedCornerShape(14.dp),
             ) {
                 if (form.isSubmitting) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                    )
                 } else {
-                    Text("Send message")
+                    Text(
+                        text = "Send message",
+                        fontWeight = FontWeight.SemiBold,
+                    )
                 }
             }
         }
@@ -500,17 +823,91 @@ private fun ContactFormCard(
 }
 
 @Composable
+private fun FormMessage(
+    message: String?,
+    isError: Boolean,
+) {
+    AnimatedVisibility(
+        visible = !message.isNullOrBlank(),
+        enter = fadeIn() + slideInVertically(),
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            color = if (isError) {
+                MaterialTheme.colorScheme.errorContainer
+            } else {
+                MaterialTheme.colorScheme.primaryContainer
+            },
+        ) {
+            Text(
+                text = message.orEmpty(),
+                modifier = Modifier.padding(
+                    AkahaluSpacing.Medium,
+                ),
+                color = if (isError) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                },
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AboutCard(
+    profile: Profile,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+    ) {
+        Column(
+            modifier = Modifier.padding(AkahaluSpacing.Large),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Medium,
+            ),
+        ) {
+            SectionHeader(
+                eyebrow = "ABOUT",
+                title = "A little more about me",
+            )
+
+            Text(
+                text = profile.shortBio,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+
+            HorizontalDivider()
+
+            Text(
+                text = profile.biography,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun ProfileLinksCard(
     profile: Profile,
+    externalUrlLauncher: ExternalUrlLauncher,
 ) {
     val links = buildList {
         profile.websiteUrl
             ?.takeIf { it.isNotBlank() }
-            ?.let { add("Website" to it) }
+            ?.let {
+                add("Website" to it)
+            }
 
         profile.resumeUrl
             ?.takeIf { it.isNotBlank() }
-            ?.let { add("Resume" to it) }
+            ?.let {
+                add("Resume" to it)
+            }
     }
 
     if (links.isEmpty()) {
@@ -519,26 +916,41 @@ private fun ProfileLinksCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(AkahaluSpacing.Large),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Small,
+            ),
         ) {
-            Text(
-                text = "Professional links",
-                style = MaterialTheme.typography.titleMedium,
+            SectionHeader(
+                eyebrow = "PROFESSIONAL LINKS",
+                title = "Explore my work",
             )
 
             links.forEach { (label, url) ->
                 TextButton(
                     onClick = {
-                        // External URL handling remains a separate
-                        // platform URL launcher milestone.
+                        externalUrlLauncher.openUrl(url)
                     },
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(
-                        text = "$label: $url",
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = label,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+
+                        Text(
+                            text = "Open →",
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             }
         }
@@ -558,5 +970,21 @@ private fun ProfileAvailabilityStatus.displayName(): String {
 
         ProfileAvailabilityStatus.UNAVAILABLE ->
             "Currently unavailable"
+    }
+}
+
+private fun ProfileAvailabilityStatus.shortLabel(): String {
+    return when (this) {
+        ProfileAvailabilityStatus.AVAILABLE ->
+            "Available"
+
+        ProfileAvailabilityStatus.OPEN_TO_OPPORTUNITIES ->
+            "Open"
+
+        ProfileAvailabilityStatus.LIMITED_AVAILABILITY ->
+            "Limited"
+
+        ProfileAvailabilityStatus.UNAVAILABLE ->
+            "Unavailable"
     }
 }

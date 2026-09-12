@@ -253,6 +253,7 @@ private fun AppContent(
                 AppDestination.Contact -> {
                     ContactScreen(
                         uiState = contactUiState,
+                        externalUrlLauncher = externalUrlLauncher,
                         onNameChange = onContactNameChange,
                         onEmailChange = onContactEmailChange,
                         onPhoneChange = onContactPhoneChange,
