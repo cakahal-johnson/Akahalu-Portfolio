@@ -1,10 +1,13 @@
 package com.akahalu.portfolio.presentation.home
 
+import akahaluportfoliomobile.shared.generated.resources.Res
+import akahaluportfoliomobile.shared.generated.resources.logo
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,9 +16,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,7 +30,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -48,8 +52,12 @@ import com.akahalu.portfolio.core.designsystem.tokens.AkahaluSpacing
 import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.ProfileAvailabilityStatus
 import com.akahalu.portfolio.domain.portfolio.model.Project
+import com.akahalu.portfolio.presentation.components.SkeletonBox
+import com.akahalu.portfolio.presentation.components.SkeletonCard
+import com.akahalu.portfolio.presentation.components.SkeletonText
 import com.akahalu.portfolio.presentation.portfolio.PortfolioUiState
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun HomeScreen(
@@ -83,22 +91,148 @@ fun HomeScreen(
 
 @Composable
 private fun HomeLoading() {
-    Box(
+    LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+        contentPadding = PaddingValues(
+            vertical = AkahaluSpacing.Large,
+        ),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Large,
+        ),
+    ) {
+        item {
+            AlphaDevBanner()
+        }
+
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
+            ) {
+                HomeHeroSkeleton()
+            }
+        }
+
+        item {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
+                verticalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                SkeletonText(
+                    width = 110.dp,
+                    height = 14.dp,
+                )
+
+                SkeletonText(
+                    width = 220.dp,
+                    height = 28.dp,
+                )
+
+                SkeletonText(
+                    width = null,
+                    height = 16.dp,
+                )
+            }
+        }
+
+        items(3) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
+            ) {
+                SkeletonCard()
+            }
+        }
+
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
+            ) {
+                SkeletonCard()
+            }
+        }
+
+        item {
+            Spacer(
+                modifier = Modifier
+                    .height(AkahaluSpacing.Huge)
+                    .navigationBarsPadding(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeHeroSkeleton() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(
+                AkahaluSpacing.Large,
+            ),
             verticalArrangement = Arrangement.spacedBy(
                 AkahaluSpacing.Medium,
             ),
         ) {
-            CircularProgressIndicator()
+            SkeletonBox(
+                modifier = Modifier.size(112.dp),
+                shape = CircleShape,
+            )
 
-            Text(
-                text = "Loading portfolio…",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SkeletonText(
+                width = 150.dp,
+                height = 28.dp,
+            )
+
+            SkeletonText(
+                width = 210.dp,
+                height = 22.dp,
+            )
+
+            SkeletonText(
+                width = null,
+                height = 16.dp,
+            )
+
+            SkeletonText(
+                width = null,
+                height = 16.dp,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                SkeletonBox(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                )
+
+                SkeletonBox(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                )
+            }
+
+            SkeletonText(
+                width = 210.dp,
+                height = 18.dp,
             )
         }
     }
@@ -118,7 +252,9 @@ private fun HomeError(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(
-                modifier = Modifier.padding(AkahaluSpacing.Large),
+                modifier = Modifier.padding(
+                    AkahaluSpacing.Large,
+                ),
                 verticalArrangement = Arrangement.spacedBy(
                     AkahaluSpacing.Small,
                 ),
@@ -158,7 +294,6 @@ private fun HomeContent(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(
-            horizontal = AkahaluSpacing.Medium,
             vertical = AkahaluSpacing.Large,
         ),
         verticalArrangement = Arrangement.spacedBy(
@@ -166,71 +301,182 @@ private fun HomeContent(
         ),
     ) {
         item {
-            AnimatedVisibility(
-                visible = contentVisible,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = 500,
-                        easing = FastOutSlowInEasing,
-                    ),
-                ) + slideInVertically(
-                    animationSpec = tween(
-                        durationMillis = 500,
-                        easing = FastOutSlowInEasing,
-                    ),
-                    initialOffsetY = { it / 4 },
-                ),
+            AlphaDevBanner()
+        }
+
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
             ) {
-                HeroSection(
-                    profile = profile,
-                    onViewProjects = onViewProjects,
-                    onContact = onContact,
-                )
+                AnimatedVisibility(
+                    visible = contentVisible,
+                    enter = fadeIn(
+                        animationSpec = tween(
+                            durationMillis = 500,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    ) + slideInVertically(
+                        animationSpec = tween(
+                            durationMillis = 500,
+                            easing = FastOutSlowInEasing,
+                        ),
+                        initialOffsetY = { it / 4 },
+                    ),
+                ) {
+                    HeroSection(
+                        profile = profile,
+                        onViewProjects = onViewProjects,
+                        onContact = onContact,
+                    )
+                }
             }
         }
 
         if (featuredProjects.isNotEmpty()) {
             item {
-                SectionHeader(
-                    eyebrow = "Selected work",
-                    title = "Featured projects",
-                    description = "A selection of projects and technical work.",
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AkahaluSpacing.Medium),
+                ) {
+                    SectionHeader(
+                        eyebrow = "Selected work",
+                        title = "Featured projects",
+                        description = "A selection of projects and technical work.",
+                    )
+                }
             }
 
             items(
                 items = featuredProjects.take(4),
                 key = { project -> project.id },
             ) { project ->
-                AnimatedProjectCard(
-                    project = project,
-                    onClick = {
-                        onProjectSelected(project.slug)
-                    },
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AkahaluSpacing.Medium),
+                ) {
+                    AnimatedProjectCard(
+                        project = project,
+                        onClick = {
+                            onProjectSelected(project.slug)
+                        },
+                    )
+                }
             }
         } else {
             item {
-                EmptyProjectsCard()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AkahaluSpacing.Medium),
+                ) {
+                    EmptyProjectsCard()
+                }
             }
         }
 
         item {
-            AboutPreview(
-                profile = profile,
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
+            ) {
+                AboutPreview(
+                    profile = profile,
+                )
+            }
         }
 
         item {
-            AvailabilitySummary(
-                profile = profile,
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
+            ) {
+                AvailabilitySummary(
+                    profile = profile,
+                )
+            }
         }
 
         item {
-            HomeFooter(
-                profile = profile,
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = AkahaluSpacing.Medium),
+            ) {
+                HomeFooter(
+                    profile = profile,
+                )
+            }
+        }
+
+        item {
+            Spacer(
+                modifier = Modifier
+                    .height(AkahaluSpacing.Huge)
+                    .navigationBarsPadding(),
             )
+        }
+    }
+}
+
+@Composable
+private fun AlphaDevBanner() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp),
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.logo),
+                    contentDescription = "AlphaDev Technologies",
+                    modifier = Modifier
+                        .height(80.dp)
+                        .weight(1f)
+                        .clip(RoundedCornerShape(25.dp)),
+                    contentScale = ContentScale.Fit,
+                )
+
+                Box(
+                    modifier = Modifier
+                        .height(80.dp)
+                        .padding(horizontal = 4.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                            ),
+                    )
+                }
+
+                Text(
+                    text = "Building Digital Solutions for a Better Tomorrow",
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
         }
     }
 }
@@ -249,15 +495,17 @@ private fun HeroSection(
         ),
     ) {
         Column(
-            modifier = Modifier.padding(AkahaluSpacing.Large),
+            modifier = Modifier.padding(
+                AkahaluSpacing.Large,
+            ),
             verticalArrangement = Arrangement.spacedBy(
                 AkahaluSpacing.Medium,
             ),
         ) {
-            ProfileImage(
-                imageUrl = profile.profileImageUrl,
-                displayName = profile.displayName,
-            )
+//            ProfileImage(
+//                imageUrl = profile.profileImageUrl,
+//                displayName = profile.displayName,
+//            )
 
             AvailabilityBadge(
                 status = profile.availabilityStatus,
@@ -606,7 +854,9 @@ private fun EmptyProjectsCard() {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
-            modifier = Modifier.padding(AkahaluSpacing.Large),
+            modifier = Modifier.padding(
+                AkahaluSpacing.Large,
+            ),
             verticalArrangement = Arrangement.spacedBy(
                 AkahaluSpacing.Small,
             ),
@@ -634,7 +884,9 @@ private fun AboutPreview(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
-            modifier = Modifier.padding(AkahaluSpacing.Large),
+            modifier = Modifier.padding(
+                AkahaluSpacing.Large,
+            ),
             verticalArrangement = Arrangement.spacedBy(
                 AkahaluSpacing.Small,
             ),
@@ -678,7 +930,9 @@ private fun AvailabilitySummary(
                 ),
             ) {
                 Column(
-                    modifier = Modifier.padding(AkahaluSpacing.Large),
+                    modifier = Modifier.padding(
+                        AkahaluSpacing.Large,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(
                         AkahaluSpacing.Small,
                     ),
