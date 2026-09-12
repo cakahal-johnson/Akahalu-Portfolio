@@ -1,6 +1,6 @@
 # 🚀 Akahalu Portfolio
 
-> A production-oriented full-stack portfolio and content-management platform built with **Next.js**, **FastAPI**, **PostgreSQL**, and **Redis**.
+> A production-oriented full-stack portfolio and content-management platform built with **Next.js**, **FastAPI**, **PostgreSQL**, **Redis**, and a **Kotlin Multiplatform mobile application**.
 
 [![Backend CI](https://github.com/cakahal-johnson/Akahalu-Portfolio/actions/workflows/backend-ci.yml/badge.svg?branch=feature/account-lifecycle)](https://github.com/cakahal-johnson/Akahalu-Portfolio/actions/workflows/backend-ci.yml)
 [![Frontend CI](https://github.com/cakahal-johnson/Akahalu-Portfolio/actions/workflows/frontend-ci.yml/badge.svg?branch=feature/account-lifecycle)](https://github.com/cakahal-johnson/Akahalu-Portfolio/actions/workflows/frontend-ci.yml)
@@ -8,13 +8,19 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16.2.12-black)
 ![FastAPI](https://img.shields.io/badge/FastAPI-API-009688)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20-7F52FF)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.11.1-4285F4)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
 ## Project Status
 
-**Version 1 Web Platform:** application and container deployment ready.
+**Web Platform:** application and container deployment ready.
+
+**Mobile Platform:** Android application M-12 complete and validated on a physical Android 16 device.
+
+**Overall Project:** active development.
 
 The project currently has:
 
@@ -27,9 +33,18 @@ The project currently has:
 * production Docker images;
 * Nginx reverse proxy;
 * backend and frontend GitHub Actions CI;
-* deployment and architecture documentation.
+* deployment and architecture documentation;
+* Kotlin Multiplatform mobile application foundation;
+* shared mobile presentation, domain, data, networking, and caching layers;
+* Android portfolio browsing experience;
+* project detail and navigation experience;
+* professional experience integration;
+* technology and skills integration;
+* profile and contact integration;
+* project media/gallery integration;
+* Android 16 physical-device validation.
 
-The remaining work before a public production launch is primarily operational:
+The remaining web-platform work before a public production launch is primarily operational:
 
 * select and provision the production host;
 * configure the production domain and DNS;
@@ -37,6 +52,180 @@ The remaining work before a public production launch is primarily operational:
 * establish production backup and restore procedures;
 * configure monitoring and alerting;
 * perform the final production deployment and smoke test.
+
+The remaining mobile work is focused on:
+
+* Android UX and production polish;
+* accessibility and interaction refinement;
+* performance inspection;
+* production configuration;
+* Android release readiness;
+* release signing;
+* release APK/AAB generation;
+* final physical-device regression testing.
+
+---
+
+# Mobile Application
+
+The repository contains a Kotlin Multiplatform mobile application that consumes the same versioned FastAPI portfolio API used by the web platform.
+
+The mobile application is being developed as a production-oriented companion to the web portfolio, with shared presentation, domain, data, networking, and caching layers.
+
+The current Android application has completed the foundation, API integration, portfolio presentation, project navigation, application shell, experience, skills/technologies, profile/contact, project media/gallery, and Android application completion milestones.
+
+## Mobile Technology Stack
+
+* Kotlin 2.4.20
+* Kotlin Multiplatform
+* Compose Multiplatform 1.11.1
+* Compose Material 3
+* Ktor 3.5.2
+* Kotlin Serialization
+* Kotlin Coroutines
+* Coil 3.3.0
+* Android SDK 36
+* Android 16 physical-device validation
+
+## Mobile Architecture
+
+The mobile application follows a layered architecture:
+
+```text
+Presentation
+      ↓
+Domain
+      ↓
+Data
+      ↓
+Network / Cache
+````
+
+Responsibilities remain separated across the layers:
+
+```text
+Presentation
+    ↓
+UI, screens, navigation, state, loading and error presentation
+
+Domain
+    ↓
+Application models and domain-facing contracts
+
+Data
+    ↓
+Repositories, API integration, DTO mapping and cache coordination
+
+Network / Cache
+    ↓
+Ktor HTTP client, serialization, remote API and local caching
+```
+
+The mobile application reuses the existing FastAPI portfolio API rather than introducing a separate mobile backend.
+
+---
+
+# Mobile Development Milestones
+
+The mobile roadmap currently contains:
+
+```text
+M-1  KMP Foundation                         ✅ Complete
+M-2  Architecture / Design System          ✅ Complete
+M-3  Networking Foundation                 ✅ Complete
+M-4  Portfolio API Data Layer              ✅ Complete
+M-5  Portfolio Presentation Foundation     ✅ Complete
+M-6  Project Detail / Navigation           ✅ Complete
+M-7  Application Shell / Navigation        ✅ Complete
+M-8  Experience Integration                ✅ Complete
+M-9  Skills / Technologies                 ✅ Complete
+M-10A Profile / Contact Read               ✅ Complete
+M-10B Contact Message Submission           ✅ Complete
+M-11 Project Media / Gallery               ✅ Complete
+M-12 Android Application Completion        ✅ Complete
+M-13 Android UX / Production Polish        ⏳ Next
+M-14 Android Release Readiness             ⏳ Planned
+```
+
+## M-12 Android Application Completion
+
+M-12 completed the Android portfolio experience and included:
+
+* Android dependency alignment;
+* Compose Multiplatform compatibility updates;
+* loading skeletons;
+* AlphaDev branding and logo integration;
+* responsive hero presentation;
+* application-shell navigation polish;
+* system inset handling;
+* Android resource compatibility;
+* project browsing;
+* project detail navigation;
+* portfolio API integration;
+* experience and technology presentation;
+* profile/contact presentation;
+* project media/gallery presentation;
+* physical Android 16 validation.
+
+The Android application was validated on a physical Android 16 device.
+
+Final runtime validation completed without:
+
+```text
+FATAL EXCEPTION
+NoSuchMethodError
+IllegalStateException
+```
+
+The application exited cleanly after the final validation run.
+
+---
+
+# M-13 Android UX / Production Polish
+
+The next mobile milestone focuses on production-quality user experience rather than introducing a new architectural layer.
+
+Planned M-13 work:
+
+```text
+M-13 Android UX / Production Polish
+├── Responsive layout inspection
+├── Typography / spacing consistency
+├── Dark / light theme verification
+├── Navigation UX polish
+├── Error / empty / unavailable states
+├── Image loading / caching UX
+├── Accessibility review
+├── Android back navigation
+├── Touch targets / interaction polish
+├── Performance inspection
+└── Physical-device regression pass
+```
+
+M-13 changes should preserve the existing layered mobile architecture.
+
+---
+
+# M-14 Android Release Readiness
+
+After M-13, Android release preparation will cover:
+
+```text
+M-14 Android Release Readiness
+├── Application identity
+├── Versioning
+├── Launcher icon
+├── Splash screen
+├── Release signing
+├── Release build
+├── ProGuard / R8 inspection
+├── Release APK / AAB
+├── Privacy considerations
+├── Production API configuration
+├── Offline / cache behavior
+├── Crash handling
+└── Final release checklist
+```
 
 ---
 
@@ -57,7 +246,9 @@ It combines a public professional portfolio with a secure administration system 
 * users;
 * roles and permissions.
 
-The architecture is designed to demonstrate practical full-stack engineering across application development, API design, authentication, database design, containerization, continuous integration, and production deployment.
+The platform also provides a Kotlin Multiplatform mobile application for consuming and presenting portfolio information through the same versioned API.
+
+The architecture is designed to demonstrate practical full-stack engineering across application development, API design, authentication, database design, containerization, mobile development, continuous integration, and production deployment.
 
 ---
 
@@ -81,6 +272,29 @@ The public application includes:
 * loading, unavailable, and empty states.
 
 Public portfolio data is filtered server-side so private, unpublished, inactive, or soft-deleted content is not exposed.
+
+---
+
+## Mobile Portfolio
+
+The Android mobile application provides:
+
+* portfolio browsing;
+* featured project presentation;
+* project detail navigation;
+* project media/gallery presentation;
+* professional experience;
+* technologies and skills;
+* profile information;
+* contact information;
+* contact message submission;
+* loading states;
+* unavailable and empty states;
+* image loading and caching;
+* responsive Compose UI;
+* Android navigation.
+
+The mobile application consumes the same FastAPI portfolio API as the web platform.
 
 ---
 
@@ -179,6 +393,19 @@ Production traffic follows this model:
                               PostgreSQL   Redis
 ```
 
+Mobile applications consume the versioned FastAPI API directly:
+
+```text
+Android / iOS
+      |
+      v
+FastAPI /api/v1
+      |
+      +------ PostgreSQL
+      |
+      +------ Redis
+```
+
 Production routing:
 
 ```text
@@ -259,6 +486,29 @@ and has been validated to build successfully even when FastAPI is unavailable.
 
 ---
 
+# Mobile Architecture
+
+The mobile application uses Kotlin Multiplatform and Compose Multiplatform.
+
+The shared application is organized into:
+
+```text
+shared/
+├── commonMain/
+│   └── kotlin/
+│       └── com/akahalu/portfolio/
+│           ├── data/
+│           ├── domain/
+│           ├── presentation/
+│           └── ...
+```
+
+The Android target consumes the shared implementation while retaining Android-specific configuration where required.
+
+The mobile architecture is intentionally kept separate from the backend and web presentation layers while sharing the versioned API contract.
+
+---
+
 # Technology Stack
 
 ## Backend
@@ -294,6 +544,18 @@ and has been validated to build successfully even when FastAPI is unavailable.
 * react-icons
 * pnpm 11.18.0
 
+## Mobile
+
+* Kotlin 2.4.20
+* Kotlin Multiplatform
+* Compose Multiplatform 1.11.1
+* Compose Material 3
+* Ktor 3.5.2
+* Kotlin Serialization
+* Kotlin Coroutines
+* Coil 3.3.0
+* Android SDK 36
+
 ## Quality
 
 * pytest
@@ -303,6 +565,8 @@ and has been validated to build successfully even when FastAPI is unavailable.
 * mypy
 * ESLint
 * TypeScript compiler
+* Gradle
+* Android instrumentation / physical-device validation
 * GitHub Actions
 
 ## Infrastructure
@@ -345,6 +609,14 @@ Akahalu-Portfolio/
 │   ├── package.json
 │   ├── pnpm-lock.yaml
 │   └── pnpm-workspace.yaml
+│
+├── mobile/
+│   ├── androidApp/
+│   ├── shared/
+│   ├── gradle/
+│   ├── build.gradle.kts
+│   ├── settings.gradle.kts
+│   └── gradlew.bat
 │
 ├── infrastructure/
 │   ├── docker/
@@ -475,6 +747,8 @@ Install:
 * uv
 * Node.js 22
 * pnpm 11
+* JDK compatible with the Android/Kotlin build
+* Android Studio for Android development
 
 Clone:
 
@@ -620,6 +894,64 @@ http://localhost:3000
 
 ---
 
+# Mobile Setup
+
+From the repository root:
+
+```bash
+cd mobile
+```
+
+Verify Gradle:
+
+Windows PowerShell:
+
+```powershell
+.\gradlew.bat --version
+```
+
+Build the Android application:
+
+```powershell
+.\gradlew.bat :androidApp:assembleDebug
+```
+
+Run Android unit tests:
+
+```powershell
+.\gradlew.bat :androidApp:testDebugUnitTest
+```
+
+Compile the shared Android source:
+
+```powershell
+.\gradlew.bat :shared:compileAndroidMain
+```
+
+Clean the mobile build:
+
+```powershell
+.\gradlew.bat clean
+```
+
+For physical-device development:
+
+1. Enable Android Developer Options.
+2. Enable USB debugging.
+3. Connect the Android device.
+4. Verify the device:
+
+```powershell
+adb devices
+```
+
+5. Build and install the debug application through Android Studio or Gradle.
+6. Ensure the Android device can reach the development FastAPI host when testing against a local backend.
+
+The Android application has been validated on a physical Android 16 device.
+
+---
+
 # Backend Validation
 
 From `backend/`:
@@ -684,6 +1016,32 @@ The frontend production build is intentionally backend-independent.
 
 ---
 
+# Mobile Validation
+
+From `mobile/`:
+
+```powershell
+.\gradlew.bat clean
+```
+
+```powershell
+.\gradlew.bat :shared:compileAndroidMain
+```
+
+```powershell
+.\gradlew.bat :androidApp:testDebugUnitTest
+```
+
+```powershell
+.\gradlew.bat :androidApp:assembleDebug
+```
+
+Mobile validation should include physical-device regression testing for major Android milestones.
+
+M-12 was validated on Android 16 with no fatal runtime exception observed during final launch validation.
+
+---
+
 # Continuous Integration
 
 The repository contains two GitHub Actions workflows.
@@ -718,6 +1076,8 @@ standalone-output verification
 The frontend CI workflow does not start FastAPI.
 
 Both initial remote workflow runs completed successfully.
+
+Mobile CI/release automation can be introduced as part of the Android release-readiness phase.
 
 ---
 
@@ -887,6 +1247,8 @@ against production or production-like data unless volume destruction is explicit
 
 # Current Deployment Readiness
 
+## Web Platform
+
 Completed:
 
 * [x] Public portfolio
@@ -923,23 +1285,61 @@ Remaining before public production launch:
 
 ---
 
+## Mobile Platform
+
+Completed:
+
+* [x] Kotlin Multiplatform foundation
+* [x] Compose Multiplatform foundation
+* [x] Shared application architecture
+* [x] Ktor networking
+* [x] Kotlin Serialization
+* [x] Portfolio API data layer
+* [x] Portfolio presentation
+* [x] Project details
+* [x] Navigation
+* [x] Application shell
+* [x] Experience integration
+* [x] Skills and technologies
+* [x] Profile and contact read
+* [x] Contact message submission
+* [x] Project media/gallery
+* [x] Android application completion
+* [x] Android 16 physical-device validation
+
+Next:
+
+* [ ] Android UX / production polish
+* [ ] Accessibility review
+* [ ] Performance inspection
+* [ ] Physical-device regression pass
+* [ ] Android release configuration
+* [ ] Release signing
+* [ ] Release APK/AAB
+* [ ] Final Android release validation
+
+---
+
 # Version Strategy
 
 ## Version 1 — Web Platform
 
 Version 1 establishes the complete web portfolio platform and reusable API foundation.
 
-Current work is focused on final production operations and deployment.
+The web platform is application and container deployment ready.
 
-## Future Mobile Platform
+Final public release work is focused on production hosting, domain configuration, HTTPS/TLS, backups, monitoring, administrator initialization, and final deployment validation.
 
-A future phase may reuse the FastAPI backend for native applications such as:
+## Mobile Platform
+
+The mobile platform is an active companion application built on the same versioned FastAPI API.
+
+The current Android implementation has completed M-12 and is moving into M-13 Android UX / production polish.
+
+The mobile platform roadmap includes:
 
 * Android;
-* iOS.
-
-Potential capabilities include:
-
+* iOS;
 * portfolio browsing;
 * secure mobile authentication;
 * selected administrative functions;
@@ -948,7 +1348,7 @@ Potential capabilities include:
 * deep linking;
 * resume sharing.
 
-These remain future roadmap items rather than current Version 1 functionality.
+Features that have not yet been implemented remain roadmap items rather than current functionality.
 
 ---
 
@@ -957,13 +1357,26 @@ These remain future roadmap items rather than current Version 1 functionality.
 Changes should preserve:
 
 * separation of API, schema, service, repository, and model responsibilities;
+* separation of mobile presentation, domain, data, network, and cache responsibilities;
 * backend-enforced authentication and authorization;
 * explicit database migrations;
 * TypeScript contract consistency;
+* mobile API contract consistency;
 * backend-independent frontend builds;
 * Git-ignored secrets;
 * test coverage for important behavior;
-* CI validation before deployment.
+* CI validation before deployment;
+* physical-device validation for significant Android changes.
+
+Avoid introducing duplicate business logic between:
+
+```text
+Web
+Mobile
+Backend
+```
+
+The FastAPI API remains the authoritative portfolio data and authentication boundary.
 
 ---
 
@@ -985,6 +1398,12 @@ Frontend:
 ESLint
 TypeScript
 production build
+
+Mobile:
+Gradle compilation
+unit tests
+Android debug build
+physical-device validation when appropriate
 ```
 
 Do not commit secrets or environment files containing real credentials.
@@ -999,11 +1418,11 @@ Software Engineer · Backend Developer · Full-Stack Developer
 
 GitHub:
 
-https://github.com/cakahal-johnson
+[https://github.com/cakahal-johnson](https://github.com/cakahal-johnson)
 
 Repository:
 
-https://github.com/cakahal-johnson/Akahalu-Portfolio
+[https://github.com/cakahal-johnson/Akahalu-Portfolio](https://github.com/cakahal-johnson/Akahalu-Portfolio)
 
 ---
 
@@ -1012,3 +1431,5 @@ https://github.com/cakahal-johnson/Akahalu-Portfolio
 This project is licensed under the MIT License.
 
 See the `LICENSE` file for details.
+
+
