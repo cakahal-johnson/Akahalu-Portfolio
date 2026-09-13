@@ -219,5 +219,49 @@ class ProjectDetailViewModelTest {
                 "submitContactInquiry is not used by this test.",
             )
         }
+
+        override suspend fun refreshTechnologies(
+            category: String?,
+        ): List<ProjectTechnology> = getTechnologies(category)
+
+        override suspend fun refreshProjects(
+            page: Int,
+            pageSize: Int,
+            search: String?,
+            categorySlug: String?,
+            technologySlug: String?,
+            isFeatured: Boolean?,
+        ): ProjectPage = getProjects(
+            page = page,
+            pageSize = pageSize,
+            search = search,
+            categorySlug = categorySlug,
+            technologySlug = technologySlug,
+            isFeatured = isFeatured,
+        )
+
+        override suspend fun refreshFeaturedProjects(
+            limit: Int,
+        ): List<Project> = getFeaturedProjects(limit)
+
+        override suspend fun refreshExperiences(
+            page: Int,
+            pageSize: Int,
+            search: String?,
+            employmentType: String?,
+            locationType: String?,
+            isCurrent: Boolean?,
+            isFeatured: Boolean?,
+        ): ExperiencePage = getExperiences(
+            page = page,
+            pageSize = pageSize,
+            search = search,
+            employmentType = employmentType,
+            locationType = locationType,
+            isCurrent = isCurrent,
+            isFeatured = isFeatured,
+        )
+
+        override suspend fun refreshProfile(): Profile = getProfile()
     }
 }

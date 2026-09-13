@@ -54,9 +54,10 @@ class ContactRepositoryImplTest {
         }
 
         val repository = PortfolioRepositoryImpl(
-            PortfolioRemoteDataSource(
+            remoteDataSource = PortfolioRemoteDataSource(
                 ApiClient(httpClient),
             ),
+            cache = createTestPortfolioCache(),
         )
 
         val result = repository.submitContactInquiry(

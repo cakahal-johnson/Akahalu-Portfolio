@@ -53,6 +53,48 @@ class JsonPortfolioCacheTest {
     }
 
     @Test
+    fun retainsStaleCacheValue() = runTest {
+        val storage = InMemoryPortfolioCacheStorage()
+
+        storage.write(
+            key = "stale",
+            value = """
+                {
+                    "cachedAt": "2020-01-01T00:00:00Z",
+                    "value": "{\"name\":\"Akahalu\",\"count\":5}"
+                }
+            """.trimIndent(),
+        )
+
+        val cache = JsonPortfolioCache(
+            storage = storage,
+        )
+
+        val result = cache.get(
+            key = "stale",
+            serializer = TestValue.serializer(),
+        )
+
+        assertEquals(
+            expected = TestValue(
+                name = "Akahalu",
+                count = 5,
+            ),
+            actual = result,
+        )
+
+        assertEquals(
+            """
+                {
+                    "cachedAt": "2020-01-01T00:00:00Z",
+                    "value": "{\"name\":\"Akahalu\",\"count\":5}"
+                }
+            """.trimIndent(),
+            storage.read("stale"),
+        )
+    }
+
+    @Test
     fun removesCorruptedCacheValue() = runTest {
         val storage = InMemoryPortfolioCacheStorage()
 
@@ -71,8 +113,39 @@ class JsonPortfolioCacheTest {
         )
 
         assertNull(result)
+
         assertNull(
             storage.read("corrupt"),
+        )
+    }
+
+    @Test
+    fun removesCacheWhenCachedTimestampIsInvalid() = runTest {
+        val storage = InMemoryPortfolioCacheStorage()
+
+        storage.write(
+            key = "invalid-timestamp",
+            value = """
+                {
+                    "cachedAt": "not-a-timestamp",
+                    "value": "{\"name\":\"Akahalu\",\"count\":5}"
+                }
+            """.trimIndent(),
+        )
+
+        val cache = JsonPortfolioCache(
+            storage = storage,
+        )
+
+        val result = cache.get(
+            key = "invalid-timestamp",
+            serializer = TestValue.serializer(),
+        )
+
+        assertNull(result)
+
+        assertNull(
+            storage.read("invalid-timestamp"),
         )
     }
 

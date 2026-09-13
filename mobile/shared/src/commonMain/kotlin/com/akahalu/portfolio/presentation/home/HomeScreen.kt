@@ -12,17 +12,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -44,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -426,59 +428,106 @@ private fun HomeContent(
 
 @Composable
 private fun AlphaDevBanner() {
-    Surface(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp),
-        color = MaterialTheme.colorScheme.surface,
+            .padding(horizontal = AkahaluSpacing.Medium),
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Image(
-                    painter = painterResource(Res.drawable.logo),
-                    contentDescription = "AlphaDev Technologies",
-                    modifier = Modifier
-                        .height(80.dp)
-                        .weight(1f)
-                        .clip(RoundedCornerShape(25.dp)),
-                    contentScale = ContentScale.Fit,
-                )
+        val compactLayout = maxWidth < 420.dp
 
-                Box(
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 1.dp,
+        ) {
+            if (compactLayout) {
+                Column(
                     modifier = Modifier
-                        .height(80.dp)
-                        .padding(horizontal = 4.dp),
-                    contentAlignment = Alignment.Center,
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = AkahaluSpacing.Medium,
+                            vertical = AkahaluSpacing.Small,
+                        ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(
+                        AkahaluSpacing.Small,
+                    ),
                 ) {
+                    AlphaDevLogo()
+
+                    AlphaDevSlogan(
+                        modifier = Modifier.widthIn(
+                            max = 280.dp,
+                        ),
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = AkahaluSpacing.Medium,
+                            vertical = AkahaluSpacing.Small,
+                        ),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    AlphaDevLogo(
+                        modifier = Modifier.weight(1f),
+                    )
+
                     Box(
                         modifier = Modifier
+                            .padding(horizontal = AkahaluSpacing.Small)
                             .size(6.dp)
                             .clip(CircleShape)
                             .background(
                                 MaterialTheme.colorScheme.primary,
                             ),
                     )
-                }
 
-                Text(
-                    text = "Building Digital Solutions for a Better Tomorrow",
-                    modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium,
-                )
+                    AlphaDevSlogan(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = AkahaluSpacing.Small),
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+private fun AlphaDevLogo(
+    modifier: Modifier = Modifier,
+) {
+    Image(
+        painter = painterResource(Res.drawable.logo),
+        contentDescription = "AlphaDev Technologies",
+        modifier = modifier
+            .height(72.dp)
+            .widthIn(
+                max = 190.dp,
+            )
+            .clip(
+                RoundedCornerShape(15.dp),
+            ),
+        contentScale = ContentScale.Fit,
+    )
+}
+
+@Composable
+private fun AlphaDevSlogan(
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = "Building Digital Solutions for a Better Tomorrow",
+        modifier = modifier,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontWeight = FontWeight.Medium,
+    )
 }
 
 @Composable
@@ -502,11 +551,6 @@ private fun HeroSection(
                 AkahaluSpacing.Medium,
             ),
         ) {
-//            ProfileImage(
-//                imageUrl = profile.profileImageUrl,
-//                displayName = profile.displayName,
-//            )
-
             AvailabilityBadge(
                 status = profile.availabilityStatus,
             )
@@ -552,14 +596,18 @@ private fun HeroSection(
             ) {
                 Button(
                     onClick = onViewProjects,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
                 ) {
                     Text("View projects")
                 }
 
                 OutlinedButton(
                     onClick = onContact,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
                 ) {
                     Text("Contact me")
                 }
@@ -597,41 +645,6 @@ private fun HeroSection(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ProfileImage(
-    imageUrl: String?,
-    displayName: String,
-) {
-    Box(
-        modifier = Modifier
-            .size(112.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (!imageUrl.isNullOrBlank()) {
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = "$displayName profile photo",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-        } else {
-            Text(
-                text = displayName
-                    .split(" ")
-                    .filter { it.isNotBlank() }
-                    .take(2)
-                    .mapNotNull { it.firstOrNull() }
-                    .joinToString(""),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
         }
     }
 }

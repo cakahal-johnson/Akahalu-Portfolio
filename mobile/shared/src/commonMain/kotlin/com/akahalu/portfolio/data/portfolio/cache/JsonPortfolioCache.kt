@@ -31,13 +31,7 @@ class JsonPortfolioCache(
                 rawValue,
             )
 
-            val cachedAt = Instant.parse(entry.cachedAt)
-            val age = clock.now() - cachedAt
-
-            if (age > staleDuration) {
-                storage.remove(key)
-                return null
-            }
+            Instant.parse(entry.cachedAt)
 
             json.decodeFromString(
                 serializer,

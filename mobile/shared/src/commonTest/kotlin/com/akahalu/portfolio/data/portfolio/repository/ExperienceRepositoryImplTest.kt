@@ -335,6 +335,7 @@ class ExperienceRepositoryImplTest {
             remoteDataSource = PortfolioRemoteDataSource(
                 apiClient = ApiClient(httpClient),
             ),
+            cache = createTestPortfolioCache(),
         )
     }
 }

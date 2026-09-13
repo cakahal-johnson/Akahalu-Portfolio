@@ -23,12 +23,16 @@ class PortfolioRepositoryImplTest {
 
     private fun createRepository(
         response: String,
+        requestCounter: (() -> Unit)? = null,
+        responseProvider: (() -> String)? = null,
     ): PortfolioRepositoryImpl {
         val engine = MockEngine(
             MockEngineConfig().apply {
                 requestHandlers.add {
+                    requestCounter?.invoke()
+
                     respond(
-                        content = response,
+                        content = responseProvider?.invoke() ?: response,
                         status = HttpStatusCode.OK,
                         headers = headersOf(
                             "Content-Type",
@@ -53,7 +57,10 @@ class PortfolioRepositoryImplTest {
         val apiClient = ApiClient(httpClient)
 
         return PortfolioRepositoryImpl(
-            PortfolioRemoteDataSource(apiClient),
+            remoteDataSource = PortfolioRemoteDataSource(
+                apiClient = apiClient,
+            ),
+            cache = createTestPortfolioCache(),
         )
     }
 
@@ -83,6 +90,7 @@ class PortfolioRepositoryImplTest {
             1,
             result.size,
         )
+
         assertEquals(
             "web-development",
             result.first().slug,
@@ -115,11 +123,129 @@ class PortfolioRepositoryImplTest {
             1,
             result.size,
         )
+
         assertEquals(
             ProjectTechnologyCategory.FRAMEWORK,
             result.first().category,
         )
     }
+
+    @Test
+    fun getTechnologiesUsesCacheAfterFirstNetworkRequest() =
+        runTest {
+            var requestCount = 0
+
+            val repository = createRepository(
+                response = """
+                    [
+                        {
+                            "id": "technology-1",
+                            "name": "FastAPI",
+                            "slug": "fastapi",
+                            "category": "framework",
+                            "icon": "fastapi",
+                            "official_url": "https://fastapi.tiangolo.com",
+                            "color": "#009688",
+                            "sort_order": 1,
+                            "description": "Python API framework"
+                        }
+                    ]
+                """.trimIndent(),
+                requestCounter = {
+                    requestCount++
+                },
+            )
+
+            val firstResult = repository.getTechnologies()
+            val secondResult = repository.getTechnologies()
+
+            assertEquals(
+                1,
+                requestCount,
+            )
+
+            assertEquals(
+                firstResult,
+                secondResult,
+            )
+
+            assertEquals(
+                "FastAPI",
+                secondResult.first().name,
+            )
+        }
+
+    @Test
+    fun refreshTechnologiesAlwaysRequestsNetworkAndUpdatesCache() =
+        runTest {
+            var requestCount = 0
+
+            val repository = createRepository(
+                response = "",
+                requestCounter = {
+                    requestCount++
+                },
+                responseProvider = {
+                    if (requestCount == 1) {
+                        """
+                            [
+                                {
+                                    "id": "technology-1",
+                                    "name": "FastAPI",
+                                    "slug": "fastapi",
+                                    "category": "framework",
+                                    "icon": "fastapi",
+                                    "official_url": "https://fastapi.tiangolo.com",
+                                    "color": "#009688",
+                                    "sort_order": 1,
+                                    "description": "Python API framework"
+                                }
+                            ]
+                        """.trimIndent()
+                    } else {
+                        """
+                            [
+                                {
+                                    "id": "technology-2",
+                                    "name": "Kotlin",
+                                    "slug": "kotlin",
+                                    "category": "language",
+                                    "icon": "kotlin",
+                                    "official_url": null,
+                                    "color": null,
+                                    "sort_order": 1,
+                                    "description": "Kotlin programming language"
+                                }
+                            ]
+                        """.trimIndent()
+                    }
+                },
+            )
+
+            val initialResult = repository.getTechnologies()
+            val refreshedResult = repository.refreshTechnologies()
+            val cachedResult = repository.getTechnologies()
+
+            assertEquals(
+                2,
+                requestCount,
+            )
+
+            assertEquals(
+                "FastAPI",
+                initialResult.first().name,
+            )
+
+            assertEquals(
+                "Kotlin",
+                refreshedResult.first().name,
+            )
+
+            assertEquals(
+                "Kotlin",
+                cachedResult.first().name,
+            )
+        }
 
     @Test
     fun getProjectsMapsPagination() = runTest {
@@ -160,17 +286,21 @@ class PortfolioRepositoryImplTest {
             1,
             result.items.size,
         )
+
         assertEquals(
             1,
             result.totalItems,
         )
+
         assertEquals(
             1,
             result.totalPages,
         )
+
         assertTrue(
             result.items.first().isFeatured,
         )
+
         assertEquals(
             ProjectStatus.PUBLISHED,
             result.items.first().status,
@@ -220,14 +350,17 @@ class PortfolioRepositoryImplTest {
             "akahalu-portfolio",
             result.slug,
         )
+
         assertEquals(
             "Full-stack portfolio platform.",
             result.description,
         )
+
         assertEquals(
             "https://example.com",
             result.liveUrl,
         )
+
         assertTrue(
             result.isFeatured,
         )
@@ -264,10 +397,12 @@ class PortfolioRepositoryImplTest {
             1,
             result.size,
         )
+
         assertEquals(
             "featured-project",
             result.first().slug,
         )
+
         assertTrue(
             result.first().isFeatured,
         )

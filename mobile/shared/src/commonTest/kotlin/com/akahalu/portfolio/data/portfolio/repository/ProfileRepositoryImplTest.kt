@@ -36,7 +36,10 @@ class ProfileRepositoryImplTest {
         val client = HttpClient(engine)
         val apiClient = ApiClient(client)
         val remoteDataSource = PortfolioRemoteDataSource(apiClient)
-        val repository = PortfolioRepositoryImpl(remoteDataSource)
+        val repository = PortfolioRepositoryImpl(
+            remoteDataSource = remoteDataSource,
+            cache = createTestPortfolioCache(),
+        )
 
         val profile = repository.getProfile()
 
