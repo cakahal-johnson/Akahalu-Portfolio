@@ -47,6 +47,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun SkillsScreen(
     uiState: SkillsUiState,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (uiState) {
@@ -66,7 +67,9 @@ fun SkillsScreen(
         is SkillsUiState.Error -> {
             SkillsErrorScreen(
                 message = uiState.message,
+                onRetry = onRetry,
                 modifier = modifier,
+
             )
         }
     }
@@ -126,6 +129,7 @@ private fun SkillsLoadingScreen(
 @Composable
 private fun SkillsErrorScreen(
     message: String,
+    onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -152,6 +156,15 @@ private fun SkillsErrorScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
+        TextButton(
+            onClick = onRetry,
+        ) {
+            Text(
+                text = "Retry",
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 }
 

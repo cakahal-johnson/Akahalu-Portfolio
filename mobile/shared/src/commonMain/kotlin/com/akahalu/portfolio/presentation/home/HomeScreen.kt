@@ -3,10 +3,10 @@ package com.akahalu.portfolio.presentation.home
 import akahaluportfoliomobile.shared.generated.resources.Res
 import akahaluportfoliomobile.shared.generated.resources.logo
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -67,6 +67,7 @@ fun HomeScreen(
     onProjectSelected: (String) -> Unit,
     onViewProjects: () -> Unit,
     onContact: () -> Unit,
+    onRetry: () -> Unit,
 ) {
     when (uiState) {
         PortfolioUiState.Loading -> {
@@ -76,6 +77,7 @@ fun HomeScreen(
         is PortfolioUiState.Error -> {
             HomeError(
                 message = uiState.message,
+                onRetry = onRetry,
             )
         }
 
@@ -243,6 +245,7 @@ private fun HomeHeroSkeleton() {
 @Composable
 private fun HomeError(
     message: String,
+    onRetry: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -252,6 +255,9 @@ private fun HomeError(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+            ),
         ) {
             Column(
                 modifier = Modifier.padding(
@@ -264,13 +270,25 @@ private fun HomeError(
                 Text(
                     text = "Something went wrong",
                     style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
 
                 Text(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
                 )
+
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "Retry",
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
         }
     }

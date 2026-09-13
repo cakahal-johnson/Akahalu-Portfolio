@@ -66,6 +66,7 @@ fun ContactScreen(
     onMessageChange: (String) -> Unit,
     onConsentChange: (Boolean) -> Unit,
     onSubmit: () -> Unit,
+    onRetry: () -> Unit,
 ) {
     when (uiState) {
         ContactUiState.Loading -> {
@@ -92,6 +93,7 @@ fun ContactScreen(
         is ContactUiState.Error -> {
             ContactError(
                 message = uiState.message,
+                onRetry = onRetry,
             )
         }
     }
@@ -146,6 +148,7 @@ private fun ContactLoading() {
 @Composable
 private fun ContactError(
     message: String,
+    onRetry: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -180,6 +183,16 @@ private fun ContactError(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
+
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(
+                        text = "Retry",
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
             }
         }
     }

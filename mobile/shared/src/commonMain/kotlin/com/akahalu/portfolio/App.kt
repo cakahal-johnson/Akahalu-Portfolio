@@ -18,6 +18,7 @@ import com.akahalu.portfolio.core.navigation.AppDestination
 import com.akahalu.portfolio.core.navigation.AppNavigator
 import com.akahalu.portfolio.core.network.NetworkConfig
 import com.akahalu.portfolio.core.platform.ExternalUrlLauncher
+import com.akahalu.portfolio.data.portfolio.cache.PortfolioCacheStorage
 import com.akahalu.portfolio.domain.portfolio.model.ContactInquiryType
 import com.akahalu.portfolio.domain.portfolio.repository.PortfolioRepository
 import com.akahalu.portfolio.presentation.contact.ContactScreen
@@ -37,7 +38,6 @@ import com.akahalu.portfolio.presentation.skills.SkillsScreen
 import com.akahalu.portfolio.presentation.skills.SkillsUiState
 import com.akahalu.portfolio.presentation.skills.SkillsViewModel
 import kotlinx.coroutines.CoroutineScope
-import com.akahalu.portfolio.data.portfolio.cache.PortfolioCacheStorage
 
 @Composable
 fun App(
@@ -150,10 +150,13 @@ fun App(
             onBackFromProjectDetail = {
                 navigator.goBack()
             },
+            onPortfolioRetry = portfolioViewModel::loadPortfolio,
             experienceUiState = experienceUiState,
             onExperienceRetry = experienceViewModel::loadExperiences,
             skillsUiState = skillsUiState,
+            onSkillsRetry = skillsViewModel::loadTechnologies,
             contactUiState = contactUiState,
+            onContactRetry = contactViewModel::loadProfile,
             onContactNameChange = contactViewModel::updateName,
             onContactEmailChange = contactViewModel::updateEmail,
             onContactPhoneChange = contactViewModel::updatePhone,
@@ -177,10 +180,13 @@ private fun AppContent(
     onTopLevelDestinationSelected: (AppDestination) -> Unit,
     onProjectSelected: (String) -> Unit,
     onBackFromProjectDetail: () -> Unit,
+    onPortfolioRetry: () -> Unit,
     experienceUiState: ExperienceUiState,
     onExperienceRetry: () -> Unit,
     skillsUiState: SkillsUiState,
+    onSkillsRetry: () -> Unit,
     contactUiState: ContactUiState,
+    onContactRetry: () -> Unit,
     onContactNameChange: (String) -> Unit,
     onContactEmailChange: (String) -> Unit,
     onContactPhoneChange: (String) -> Unit,
@@ -224,6 +230,7 @@ private fun AppContent(
                                 AppDestination.Contact,
                             )
                         },
+                        onRetry = onPortfolioRetry,
                     )
                 }
 
@@ -255,6 +262,7 @@ private fun AppContent(
                 AppDestination.Skills -> {
                     SkillsScreen(
                         uiState = skillsUiState,
+                        onRetry = onSkillsRetry,
                     )
                 }
 
@@ -271,6 +279,7 @@ private fun AppContent(
                         onMessageChange = onContactMessageChange,
                         onConsentChange = onContactConsentChange,
                         onSubmit = onContactSubmit,
+                        onRetry = onContactRetry,
                     )
                 }
             }
