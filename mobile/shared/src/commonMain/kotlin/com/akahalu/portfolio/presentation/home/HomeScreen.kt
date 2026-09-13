@@ -45,11 +45,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import com.akahalu.portfolio.core.designsystem.tokens.AkahaluSpacing
 import com.akahalu.portfolio.domain.portfolio.model.Profile
 import com.akahalu.portfolio.domain.portfolio.model.ProfileAvailabilityStatus
@@ -569,6 +568,11 @@ private fun HeroSection(
                 AkahaluSpacing.Medium,
             ),
         ) {
+            ProfileImage(
+                imageUrl = profile.profileImageUrl,
+                displayName = profile.displayName,
+            )
+
             AvailabilityBadge(
                 status = profile.availabilityStatus,
             )
@@ -665,6 +669,65 @@ private fun HeroSection(
             }
         }
     }
+}
+
+@Composable
+private fun ProfileImage(
+    imageUrl: String?,
+    displayName: String,
+) {
+    Box(
+        modifier = Modifier
+            .size(112.dp)
+            .clip(CircleShape)
+            .background(
+                MaterialTheme.colorScheme.primaryContainer,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (imageUrl.isNullOrBlank()) {
+            ProfileInitials(
+                displayName = displayName,
+            )
+        } else {
+            SubcomposeAsyncImage(
+                model = imageUrl,
+                contentDescription = "$displayName profile photo",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                loading = {
+                    SkeletonBox(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = CircleShape,
+                    )
+                },
+                error = {
+                    ProfileInitials(
+                        displayName = displayName,
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileInitials(
+    displayName: String,
+) {
+    Text(
+        text = displayName
+            .trim()
+            .split(Regex("\\s+"))
+            .filter { it.isNotBlank() }
+            .take(2)
+            .mapNotNull { it.firstOrNull() }
+            .joinToString("")
+            .ifBlank { "AV" },
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onPrimaryContainer,
+    )
 }
 
 @Composable
@@ -800,13 +863,28 @@ private fun AnimatedProjectCard(
         ) {
             Column {
                 if (!project.thumbnailUrl.isNullOrBlank()) {
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = project.thumbnailUrl,
                         contentDescription = "${project.title} project preview",
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(190.dp),
                         contentScale = ContentScale.Crop,
+                        loading = {
+                            SkeletonBox(
+                                modifier = Modifier.fillMaxSize(),
+                                shape = RoundedCornerShape(22.dp),
+                            )
+                        },
+                        error = {
+                            ProjectThumbnailFallback(
+                                title = project.title,
+                            )
+                        },
+                    )
+                } else {
+                    ProjectThumbnailFallback(
+                        title = project.title,
                     )
                 }
 
@@ -875,6 +953,38 @@ private fun AnimatedProjectCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ProjectThumbnailFallback(
+    title: String,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(190.dp)
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = projectInitials(title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
         }
     }
 }
@@ -1039,5 +1149,32 @@ private fun HomeFooter(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+private fun projectInitials(
+    title: String,
+): String {
+    val words = title
+        .trim()
+        .split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+
+    return when {
+        words.size >= 2 -> {
+            words
+                .take(2)
+                .joinToString("") { word ->
+                    word.first().uppercase()
+                }
+        }
+
+        words.size == 1 -> {
+            words.first()
+                .take(2)
+                .uppercase()
+        }
+
+        else -> "PR"
     }
 }

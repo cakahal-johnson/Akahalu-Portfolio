@@ -38,10 +38,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import com.akahalu.portfolio.core.designsystem.tokens.AkahaluSpacing
 import com.akahalu.portfolio.domain.portfolio.model.Project
 import com.akahalu.portfolio.domain.portfolio.model.ProjectStatus
+import com.akahalu.portfolio.presentation.components.SkeletonBox
 import com.akahalu.portfolio.presentation.components.SkeletonCard
 import com.akahalu.portfolio.presentation.components.SkeletonText
 import com.akahalu.portfolio.presentation.portfolio.PortfolioUiState
@@ -348,11 +349,22 @@ private fun ProjectThumbnail(
         contentAlignment = Alignment.Center,
     ) {
         if (!project.thumbnailUrl.isNullOrBlank()) {
-            AsyncImage(
+            SubcomposeAsyncImage(
                 model = project.thumbnailUrl,
                 contentDescription = "${project.title} project preview",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
+                loading = {
+                    SkeletonBox(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = RoundedCornerShape(22.dp),
+                    )
+                },
+                error = {
+                    ProjectThumbnailFallback(
+                        title = project.title,
+                    )
+                },
             )
         } else {
             ProjectThumbnailFallback(
@@ -389,19 +401,28 @@ private fun ProjectThumbnailFallback(
 ) {
     Box(
         modifier = Modifier
-            .size(72.dp)
-            .clip(CircleShape)
+            .fillMaxSize()
             .background(
-                MaterialTheme.colorScheme.primaryContainer,
+                MaterialTheme.colorScheme.surfaceVariant,
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = projectInitials(title),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-        )
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(CircleShape)
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = projectInitials(title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
     }
 }
 
