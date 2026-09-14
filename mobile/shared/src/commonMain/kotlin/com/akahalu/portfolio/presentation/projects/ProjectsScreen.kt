@@ -45,6 +45,7 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectStatus
 import com.akahalu.portfolio.presentation.components.SkeletonBox
 import com.akahalu.portfolio.presentation.components.SkeletonCard
 import com.akahalu.portfolio.presentation.components.SkeletonText
+import com.akahalu.portfolio.presentation.home.HomeTopBar
 import com.akahalu.portfolio.presentation.portfolio.PortfolioUiState
 import kotlinx.coroutines.delay
 
@@ -52,6 +53,9 @@ import kotlinx.coroutines.delay
 fun ProjectsScreen(
     uiState: PortfolioUiState,
     onProjectSelected: (String) -> Unit,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AnimatedContent(
@@ -64,12 +68,19 @@ fun ProjectsScreen(
     ) { state ->
         when (state) {
             PortfolioUiState.Loading -> {
-                ProjectsLoading()
+                ProjectsLoading(
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle,
+                    onHireMe = onHireMe,
+                )
             }
 
             is PortfolioUiState.Error -> {
                 ProjectsError(
                     message = state.message,
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle,
+                    onHireMe = onHireMe,
                 )
             }
 
@@ -77,6 +88,9 @@ fun ProjectsScreen(
                 ProjectList(
                     projects = state.projectPage.items,
                     onProjectSelected = onProjectSelected,
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle,
+                    onHireMe = onHireMe,
                 )
             }
         }
@@ -85,6 +99,9 @@ fun ProjectsScreen(
 
 @Composable
 private fun ProjectsLoading(
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -97,6 +114,14 @@ private fun ProjectsLoading(
             vertical = AkahaluSpacing.Large,
         ),
     ) {
+        item {
+            HomeTopBar(
+                isDarkTheme = isDarkTheme,
+                onThemeToggle = onThemeToggle,
+                onHireMe = onHireMe,
+            )
+        }
+
         item {
             Column(
                 verticalArrangement = Arrangement.spacedBy(
@@ -126,39 +151,58 @@ private fun ProjectsLoading(
 @Composable
 private fun ProjectsError(
     message: String,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(AkahaluSpacing.Large),
-        contentAlignment = Alignment.Center,
+            .padding(AkahaluSpacing.Medium),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
+        ),
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            ),
+        HomeTopBar(
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle,
+            onHireMe = onHireMe,
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(AkahaluSpacing.Large),
+            contentAlignment = Alignment.Center,
         ) {
-            Column(
-                modifier = Modifier.padding(
-                    AkahaluSpacing.Large,
-                ),
-                verticalArrangement = Arrangement.spacedBy(
-                    AkahaluSpacing.Small,
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.surfaceContainer,
                 ),
             ) {
-                Text(
-                    text = "Unable to load projects",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
+                Column(
+                    modifier = Modifier.padding(
+                        AkahaluSpacing.Large,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(
+                        AkahaluSpacing.Small,
+                    ),
+                ) {
+                    Text(
+                        text = "Unable to load projects",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
 
-                Text(
-                    text = message,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                )
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
             }
         }
     }
@@ -168,10 +212,16 @@ private fun ProjectsError(
 private fun ProjectList(
     projects: List<Project>,
     onProjectSelected: (String) -> Unit,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (projects.isEmpty()) {
         ProjectEmptyState(
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle,
+            onHireMe = onHireMe,
             modifier = modifier,
         )
         return
@@ -187,6 +237,14 @@ private fun ProjectList(
             vertical = AkahaluSpacing.Large,
         ),
     ) {
+        item {
+            HomeTopBar(
+                isDarkTheme = isDarkTheme,
+                onThemeToggle = onThemeToggle,
+                onHireMe = onHireMe,
+            )
+        }
+
         item {
             ProjectsHeader(
                 projectCount = projects.size,
@@ -211,29 +269,51 @@ private fun ProjectList(
 private fun ProjectsHeader(
     projectCount: Int,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(
-            AkahaluSpacing.Small,
-        ),
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
     ) {
-        Text(
-            text = "Projects",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        Column(
+            modifier = Modifier.padding(
+                horizontal = AkahaluSpacing.Large,
+                vertical = AkahaluSpacing.Large,
+            ),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Small,
+            ),
+        ) {
+            Text(
+                text = "Projects",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
 
-        Text(
-            text = "A selection of applications, platforms, and technical work I have built.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+            Text(
+                text = "A selection of applications, platforms, and technical work I have built.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
 
-        Text(
-            text = "$projectCount project${if (projectCount == 1) "" else "s"}",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-        )
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surface.copy(
+                    alpha = 0.65f,
+                ),
+            ) {
+                Text(
+                    text = "$projectCount project${if (projectCount == 1) "" else "s"}",
+                    modifier = Modifier.padding(
+                        horizontal = 12.dp,
+                        vertical = 6.dp,
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
     }
 }
 
@@ -530,37 +610,55 @@ private fun ProjectDate(
 
 @Composable
 private fun ProjectEmptyState(
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(AkahaluSpacing.Large),
-        contentAlignment = Alignment.Center,
+            .padding(AkahaluSpacing.Medium),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
+        ),
     ) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Column(
-                modifier = Modifier.padding(
-                    AkahaluSpacing.Large,
-                ),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(
-                    AkahaluSpacing.Small,
-                ),
-            ) {
-                Text(
-                    text = "No projects available",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
+        HomeTopBar(
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle,
+            onHireMe = onHireMe,
+        )
 
-                Text(
-                    text = "There are currently no portfolio projects to display.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(AkahaluSpacing.Large),
+            contentAlignment = Alignment.Center,
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(
+                        AkahaluSpacing.Large,
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(
+                        AkahaluSpacing.Small,
+                    ),
+                ) {
+                    Text(
+                        text = "No projects available",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Text(
+                        text = "There are currently no portfolio projects to display.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

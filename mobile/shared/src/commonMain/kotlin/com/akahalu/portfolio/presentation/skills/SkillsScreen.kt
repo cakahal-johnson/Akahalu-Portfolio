@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,35 +41,57 @@ import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnology
 import com.akahalu.portfolio.domain.portfolio.model.ProjectTechnologyCategory
 import com.akahalu.portfolio.presentation.components.SkeletonCard
 import com.akahalu.portfolio.presentation.components.SkeletonText
+import com.akahalu.portfolio.presentation.home.HomeTopBar
 import kotlinx.coroutines.delay
 
 @Composable
 fun SkillsScreen(
     uiState: SkillsUiState,
     onRetry: () -> Unit,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (uiState) {
-        SkillsUiState.Loading -> {
-            SkillsLoadingScreen(
-                modifier = modifier,
-            )
-        }
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Small,
+        ),
+    ) {
+        HomeTopBar(
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle,
+            onHireMe = onHireMe,
+            modifier = Modifier.padding(
+                horizontal = AkahaluSpacing.Medium,
+                vertical = AkahaluSpacing.Small,
+            ),
+        )
 
-        is SkillsUiState.Success -> {
-            SkillsSuccessScreen(
-                technologies = uiState.technologies,
-                modifier = modifier,
-            )
-        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
+        ) {
+            when (uiState) {
+                SkillsUiState.Loading -> {
+                    SkillsLoadingScreen()
+                }
 
-        is SkillsUiState.Error -> {
-            SkillsErrorScreen(
-                message = uiState.message,
-                onRetry = onRetry,
-                modifier = modifier,
+                is SkillsUiState.Success -> {
+                    SkillsSuccessScreen(
+                        technologies = uiState.technologies,
+                    )
+                }
 
-            )
+                is SkillsUiState.Error -> {
+                    SkillsErrorScreen(
+                        message = uiState.message,
+                        onRetry = onRetry,
+                    )
+                }
+            }
         }
     }
 }
@@ -90,26 +111,7 @@ private fun SkillsLoadingScreen(
         ),
     ) {
         item {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(
-                    AkahaluSpacing.Small,
-                ),
-            ) {
-                SkeletonText(
-                    width = 240.dp,
-                    height = 32.dp,
-                )
-
-                SkeletonText(
-                    width = 320.dp,
-                    height = 18.dp,
-                )
-
-                SkeletonText(
-                    width = 110.dp,
-                    height = 16.dp,
-                )
-            }
+            SkillsLoadingHeader()
         }
 
         item {
@@ -127,6 +129,52 @@ private fun SkillsLoadingScreen(
 }
 
 @Composable
+private fun SkillsLoadingHeader() {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                horizontal = AkahaluSpacing.Large,
+                vertical = AkahaluSpacing.Large,
+            ),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Small,
+            ),
+        ) {
+            SkeletonText(
+                width = 240.dp,
+                height = 32.dp,
+            )
+
+            SkeletonText(
+                width = 320.dp,
+                height = 18.dp,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                SkeletonText(
+                    width = 110.dp,
+                    height = 36.dp,
+                )
+
+                SkeletonText(
+                    width = 100.dp,
+                    height = 36.dp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun SkillsErrorScreen(
     message: String,
     onRetry: () -> Unit,
@@ -139,31 +187,43 @@ private fun SkillsErrorScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "Unable to load skills",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Spacer(
-            modifier = Modifier.height(
-                AkahaluSpacing.Small,
-            ),
-        )
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        TextButton(
-            onClick = onRetry,
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.errorContainer,
         ) {
-            Text(
-                text = "Retry",
-                fontWeight = FontWeight.SemiBold,
-            )
+            Column(
+                modifier = Modifier.padding(
+                    horizontal = AkahaluSpacing.Large,
+                    vertical = AkahaluSpacing.Large,
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                Text(
+                    text = "Unable to load skills",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+
+                TextButton(
+                    onClick = onRetry,
+                ) {
+                    Text(
+                        text = "Retry",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+            }
         }
     }
 }
@@ -242,46 +302,57 @@ private fun SkillsHeader(
     technologyCount: Int,
     categoryCount: Int,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(
-            AkahaluSpacing.Small,
-        ),
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
     ) {
-        Text(
-            text = "Skills & Technologies",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Text(
-            text = "Technologies and tools I use to build modern digital products.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-
-        Spacer(
-            modifier = Modifier.height(
-                AkahaluSpacing.Small,
+        Column(
+            modifier = Modifier.padding(
+                horizontal = AkahaluSpacing.Large,
+                vertical = AkahaluSpacing.Large,
             ),
-        )
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
+            verticalArrangement = Arrangement.spacedBy(
                 AkahaluSpacing.Small,
             ),
         ) {
-            SkillsStatCard(
-                value = technologyCount.toString(),
-                label = "Technologies",
-                modifier = Modifier.weight(1f),
+            Text(
+                text = "Skills & Technologies",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
 
-            SkillsStatCard(
-                value = categoryCount.toString(),
-                label = "Categories",
-                modifier = Modifier.weight(1f),
+            Text(
+                text = "Technologies and tools I use to build modern digital products.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
+
+            Spacer(
+                modifier = Modifier.height(
+                    AkahaluSpacing.Small,
+                ),
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                SkillsStatCard(
+                    value = technologyCount.toString(),
+                    label = "Technologies",
+                    modifier = Modifier.weight(1f),
+                )
+
+                SkillsStatCard(
+                    value = categoryCount.toString(),
+                    label = "Categories",
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }
@@ -295,7 +366,9 @@ private fun SkillsStatCard(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
+        color = MaterialTheme.colorScheme.surface.copy(
+            alpha = 0.72f,
+        ),
     ) {
         Column(
             modifier = Modifier.padding(
@@ -306,14 +379,14 @@ private fun SkillsStatCard(
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.Bold,
             )
 
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -330,6 +403,7 @@ private fun SkillsCategoryHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(
                 AkahaluSpacing.ExtraSmall,
             ),
@@ -346,6 +420,12 @@ private fun SkillsCategoryHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+
+        Spacer(
+            modifier = Modifier.size(
+                AkahaluSpacing.Small,
+            ),
+        )
 
         Surface(
             shape = RoundedCornerShape(50),
@@ -494,7 +574,7 @@ private fun TechnologyIcon(
             text = iconText,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onPrimary,
+            color = Color.White,
         )
     }
 }
@@ -510,23 +590,33 @@ private fun SkillsEmptyState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = "Skills & Technologies",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+        ) {
+            Column(
+                modifier = Modifier.padding(
+                    horizontal = AkahaluSpacing.Large,
+                    vertical = AkahaluSpacing.Large,
+                ),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(
+                    AkahaluSpacing.Small,
+                ),
+            ) {
+                Text(
+                    text = "Skills & Technologies",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
 
-        Spacer(
-            modifier = Modifier.height(
-                AkahaluSpacing.Small,
-            ),
-        )
-
-        Text(
-            text = "No skills and technologies are available yet.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+                Text(
+                    text = "No skills and technologies are available yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

@@ -39,6 +39,10 @@ import com.akahalu.portfolio.presentation.skills.SkillsUiState
 import com.akahalu.portfolio.presentation.skills.SkillsViewModel
 import com.akahalu.portfolio.presentation.welcome.WelcomeScreen
 import kotlinx.coroutines.CoroutineScope
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 
 @Composable
 fun App(
@@ -46,7 +50,15 @@ fun App(
     externalUrlLauncher: ExternalUrlLauncher,
     cacheStorage: PortfolioCacheStorage,
 ) {
-    AkahaluPortfolioTheme {
+    val systemDarkTheme = isSystemInDarkTheme()
+
+    var darkTheme by rememberSaveable {
+        mutableStateOf(systemDarkTheme)
+    }
+
+    AkahaluPortfolioTheme(
+        darkTheme = darkTheme,
+    ) {
         val dependencies = remember(
             networkConfig,
             cacheStorage,
@@ -138,6 +150,15 @@ fun App(
 
         AppContent(
             destination = currentDestination,
+            isDarkTheme = darkTheme,
+            onThemeToggle = {
+                darkTheme = !darkTheme
+            },
+            onSkills = {
+                navigator.navigateToTopLevel(
+                    AppDestination.Skills,
+                )
+            },
             portfolioUiState = portfolioUiState,
             portfolioRepository = dependencies.portfolioRepository,
             scope = scope,
@@ -174,6 +195,9 @@ fun App(
 @Composable
 private fun AppContent(
     destination: AppDestination,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onSkills: () -> Unit,
     portfolioUiState: PortfolioUiState,
     portfolioRepository: PortfolioRepository,
     scope: CoroutineScope,
@@ -257,6 +281,9 @@ private fun AppContent(
                             )
                         },
                         onRetry = onPortfolioRetry,
+                        isDarkTheme = isDarkTheme,
+                        onThemeToggle = onThemeToggle,
+                        onSkills = onSkills,
                     )
                 }
 
@@ -264,6 +291,13 @@ private fun AppContent(
                     ProjectsScreen(
                         uiState = portfolioUiState,
                         onProjectSelected = onProjectSelected,
+                        isDarkTheme = isDarkTheme,
+                        onThemeToggle = onThemeToggle,
+                        onHireMe = {
+                            onTopLevelDestinationSelected(
+                                AppDestination.Contact,
+                            )
+                        },
                     )
                 }
 
@@ -282,6 +316,13 @@ private fun AppContent(
                         uiState = experienceUiState,
                         externalUrlLauncher = externalUrlLauncher,
                         onRetry = onExperienceRetry,
+                        isDarkTheme = isDarkTheme,
+                        onThemeToggle = onThemeToggle,
+                        onHireMe = {
+                            onTopLevelDestinationSelected(
+                                AppDestination.Contact,
+                            )
+                        },
                     )
                 }
 
@@ -289,6 +330,13 @@ private fun AppContent(
                     SkillsScreen(
                         uiState = skillsUiState,
                         onRetry = onSkillsRetry,
+                        isDarkTheme = isDarkTheme,
+                        onThemeToggle = onThemeToggle,
+                        onHireMe = {
+                            onTopLevelDestinationSelected(
+                                AppDestination.Contact,
+                            )
+                        },
                     )
                 }
 

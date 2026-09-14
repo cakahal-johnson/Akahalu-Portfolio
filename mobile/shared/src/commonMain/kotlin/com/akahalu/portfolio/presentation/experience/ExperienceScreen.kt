@@ -49,6 +49,7 @@ import com.akahalu.portfolio.domain.portfolio.model.Experience
 import com.akahalu.portfolio.domain.portfolio.model.ExperienceLocationType
 import com.akahalu.portfolio.presentation.components.SkeletonCard
 import com.akahalu.portfolio.presentation.components.SkeletonText
+import com.akahalu.portfolio.presentation.home.HomeTopBar
 import kotlinx.coroutines.delay
 
 @Composable
@@ -56,11 +57,17 @@ fun ExperienceScreen(
     uiState: ExperienceUiState,
     externalUrlLauncher: ExternalUrlLauncher,
     onRetry: () -> Unit,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (uiState) {
         ExperienceUiState.Loading -> {
             ExperienceLoading(
+                isDarkTheme = isDarkTheme,
+                onThemeToggle = onThemeToggle,
+                onHireMe = onHireMe,
                 modifier = modifier,
             )
         }
@@ -69,6 +76,9 @@ fun ExperienceScreen(
             ExperienceError(
                 message = uiState.message,
                 onRetry = onRetry,
+                isDarkTheme = isDarkTheme,
+                onThemeToggle = onThemeToggle,
+                onHireMe = onHireMe,
                 modifier = modifier,
             )
         }
@@ -76,12 +86,18 @@ fun ExperienceScreen(
         is ExperienceUiState.Success -> {
             if (uiState.experiences.isEmpty()) {
                 ExperienceEmpty(
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle,
+                    onHireMe = onHireMe,
                     modifier = modifier,
                 )
             } else {
                 ExperienceContent(
                     experiences = uiState.experiences,
                     externalUrlLauncher = externalUrlLauncher,
+                    isDarkTheme = isDarkTheme,
+                    onThemeToggle = onThemeToggle,
+                    onHireMe = onHireMe,
                     modifier = modifier,
                 )
             }
@@ -93,6 +109,9 @@ fun ExperienceScreen(
 private fun ExperienceContent(
     experiences: List<Experience>,
     externalUrlLauncher: ExternalUrlLauncher,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -105,6 +124,14 @@ private fun ExperienceContent(
             vertical = AkahaluSpacing.Large,
         ),
     ) {
+        item {
+            HomeTopBar(
+                isDarkTheme = isDarkTheme,
+                onThemeToggle = onThemeToggle,
+                onHireMe = onHireMe,
+            )
+        }
+
         item {
             ExperienceHeader(
                 experienceCount = experiences.size,
@@ -130,29 +157,51 @@ private fun ExperienceContent(
 private fun ExperienceHeader(
     experienceCount: Int,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(
-            AkahaluSpacing.Small,
-        ),
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
     ) {
-        Text(
-            text = "Professional Experience",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        Column(
+            modifier = Modifier.padding(
+                horizontal = AkahaluSpacing.Large,
+                vertical = AkahaluSpacing.Large,
+            ),
+            verticalArrangement = Arrangement.spacedBy(
+                AkahaluSpacing.Small,
+            ),
+        ) {
+            Text(
+                text = "Professional Experience",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
 
-        Text(
-            text = "A timeline of the roles, companies, and technical work that shaped my professional journey.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+            Text(
+                text = "A timeline of the roles, companies, and technical work that shaped my professional journey.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
 
-        Text(
-            text = "$experienceCount role${if (experienceCount == 1) "" else "s"}",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
-        )
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surface.copy(
+                    alpha = 0.65f,
+                ),
+            ) {
+                Text(
+                    text = "$experienceCount role${if (experienceCount == 1) "" else "s"}",
+                    modifier = Modifier.padding(
+                        horizontal = 12.dp,
+                        vertical = 6.dp,
+                    ),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+        }
     }
 }
 
@@ -665,6 +714,9 @@ private fun ExperienceWebsiteAction(
 
 @Composable
 private fun ExperienceLoading(
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -677,6 +729,14 @@ private fun ExperienceLoading(
             vertical = AkahaluSpacing.Large,
         ),
     ) {
+        item {
+            HomeTopBar(
+                isDarkTheme = isDarkTheme,
+                onThemeToggle = onThemeToggle,
+                onHireMe = onHireMe,
+            )
+        }
+
         item {
             Column(
                 verticalArrangement = Arrangement.spacedBy(
@@ -710,72 +770,125 @@ private fun ExperienceLoading(
 private fun ExperienceError(
     message: String,
     onRetry: () -> Unit,
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(AkahaluSpacing.Large),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(AkahaluSpacing.Medium),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
+        ),
     ) {
-        Text(
-            text = "Unable to load experience",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+        HomeTopBar(
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle,
+            onHireMe = onHireMe,
         )
 
-        Spacer(
-            modifier = Modifier.height(
-                AkahaluSpacing.Small,
-            ),
-        )
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.error,
-        )
-
-        TextButton(
-            onClick = onRetry,
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(AkahaluSpacing.Large),
+            contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "Retry",
-                fontWeight = FontWeight.SemiBold,
-            )
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor =
+                        MaterialTheme.colorScheme.surfaceContainer,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(
+                        AkahaluSpacing.Large,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(
+                        AkahaluSpacing.Small,
+                    ),
+                ) {
+                    Text(
+                        text = "Unable to load experience",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+
+                    TextButton(
+                        onClick = onRetry,
+                    ) {
+                        Text(
+                            text = "Retry",
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun ExperienceEmpty(
+    isDarkTheme: Boolean,
+    onThemeToggle: () -> Unit,
+    onHireMe: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(AkahaluSpacing.Large),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(AkahaluSpacing.Medium),
+        verticalArrangement = Arrangement.spacedBy(
+            AkahaluSpacing.Medium,
+        ),
     ) {
-        Text(
-            text = "No experience available",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
+        HomeTopBar(
+            isDarkTheme = isDarkTheme,
+            onThemeToggle = onThemeToggle,
+            onHireMe = onHireMe,
         )
 
-        Spacer(
-            modifier = Modifier.height(
-                AkahaluSpacing.Small,
-            ),
-        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(AkahaluSpacing.Large),
+            contentAlignment = Alignment.Center,
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(
+                        AkahaluSpacing.Large,
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(
+                        AkahaluSpacing.Small,
+                    ),
+                ) {
+                    Text(
+                        text = "No experience available",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
 
-        Text(
-            text = "Professional experience will appear here once it has been added.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+                    Text(
+                        text = "Professional experience will appear here once it has been added.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
     }
 }
 
