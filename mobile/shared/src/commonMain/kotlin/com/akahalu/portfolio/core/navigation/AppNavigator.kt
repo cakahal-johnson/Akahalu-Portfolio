@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class AppNavigator(
-    initialDestination: AppDestination = AppDestination.Home,
+    initialDestination: AppDestination = AppDestination.Welcome,
 ) {
 
     private val backStack = ArrayDeque<AppDestination>()

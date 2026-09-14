@@ -1,6 +1,7 @@
 package com.akahalu.portfolio.core.navigation
 
 sealed interface AppDestination {
+    data object Welcome : AppDestination
     data object Home : AppDestination
 
     data object Projects : AppDestination

@@ -37,6 +37,7 @@ import com.akahalu.portfolio.presentation.shell.AppNavigationBar
 import com.akahalu.portfolio.presentation.skills.SkillsScreen
 import com.akahalu.portfolio.presentation.skills.SkillsUiState
 import com.akahalu.portfolio.presentation.skills.SkillsViewModel
+import com.akahalu.portfolio.presentation.welcome.WelcomeScreen
 import kotlinx.coroutines.CoroutineScope
 
 @Composable
@@ -197,6 +198,27 @@ private fun AppContent(
     onContactConsentChange: (Boolean) -> Unit,
     onContactSubmit: () -> Unit,
 ) {
+    if (destination is AppDestination.Welcome) {
+        WelcomeScreen(
+            onViewProjects = {
+                onTopLevelDestinationSelected(
+                    AppDestination.Projects,
+                )
+            },
+            onAbout = {
+                onTopLevelDestinationSelected(
+                    AppDestination.Home,
+                )
+            },
+            onHireMe = {
+                onTopLevelDestinationSelected(
+                    AppDestination.Contact,
+                )
+            },
+        )
+        return
+    }
+
     val isDetailDestination =
         destination is AppDestination.ProjectDetail
 
@@ -216,6 +238,10 @@ private fun AppContent(
                 .padding(paddingValues),
         ) {
             when (destination) {
+                AppDestination.Welcome -> {
+                    // Handled above.
+                }
+
                 AppDestination.Home -> {
                     HomeScreen(
                         uiState = portfolioUiState,
